@@ -1,0 +1,24 @@
+{
+  "translation": {
+    "common": {
+      "welcome": "Welcome",
+      "sidebar": "Sidebar",
+      "menu": "Menu",
+      "button": "Button",
+      "content": "Content"
+    },
+    "fullPage": {
+      "title": "Website Builder",
+      "subtitle": "Welcome to the development environment!",
+      "exampleButton": "Example Button"
+    },
+    "sidebar": {
+      "title": "Sidebar Content",
+      "description": "You can drag this sidebar!",
+      "instruction": "Hold from the header and drag it to wherever you want.",
+      "menuItem1": "Menu Item 1",
+      "menuItem2": "Menu Item 2",
+      "menuItem3": "Menu Item 3"
+    }
+  }
+}

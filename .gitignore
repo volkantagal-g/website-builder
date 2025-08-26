@@ -1,0 +1,17 @@
+# Dependencies
+node_modules/
+yarn-error.log
+
+# Build
+dist/
+coverage/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

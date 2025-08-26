@@ -1,0 +1,24 @@
+{
+  "translation": {
+    "common": {
+      "welcome": "Hoş Geldiniz",
+      "sidebar": "Kenar Çubuğu",
+      "menu": "Menü",
+      "button": "Buton",
+      "content": "İçerik"
+    },
+    "fullPage": {
+      "title": "Website Builder",
+      "subtitle": "Development ortamına hoş geldiniz!",
+      "exampleButton": "Örnek Buton"
+    },
+    "sidebar": {
+      "title": "Kenar Çubuğu İçeriği",
+      "description": "Bu kenar çubuğunu sürükleyebilirsiniz!",
+      "instruction": "Header kısmından tutup istediğiniz yere taşıyabilirsiniz.",
+      "menuItem1": "Menü Öğesi 1",
+      "menuItem2": "Menü Öğesi 2",
+      "menuItem3": "Menü Öğesi 3"
+    }
+  }
+}
