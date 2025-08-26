@@ -1,7 +1,16 @@
 import React, { useState, useRef, useEffect, CSSProperties } from 'react';
 import { useDrag } from 'react-dnd';
 import { DraggableIcon } from '../../icons/draggable';
-import { ComponentMetadata } from '../FullPage';
+
+export interface ComponentMetadata {
+  name: string;
+  description: string;
+  category?: string;
+  props: Record<string, string>;
+  initialValues: Record<string, any>;
+  type: string;
+  p?: React.ComponentType<any>;
+}
 
 // Draggable Component Item
 const DraggableSidebarComponent: React.FC<{ comp: ComponentMetadata }> = ({ comp }) => {
@@ -13,9 +22,17 @@ const DraggableSidebarComponent: React.FC<{ comp: ComponentMetadata }> = ({ comp
     }),
   });
 
+  const handleDragStart = (e: React.DragEvent) => {
+    // dataTransfer ile component bilgisini gönder
+    e.dataTransfer.setData('application/json', JSON.stringify({ component: comp }));
+    console.log('Drag started with component:', comp.name);
+  };
+
   return (
     <div
       ref={drag}
+      draggable
+      onDragStart={handleDragStart}
       style={{
         padding: '12px',
         backgroundColor: '#f8f9fa',
@@ -106,7 +123,131 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [resizeOffset, setResizeOffset] = useState({ x: 0, y: 0 });
   const [currentWidth, setCurrentWidth] = useState(typeof width === 'number' ? width : 300);
   const [currentHeight, setCurrentHeight] = useState(typeof height === 'number' ? height : 400);
+  const [activeTab, setActiveTab] = useState<'pinnate' | 'general'>('pinnate');
   const sidebarRef = useRef<HTMLDivElement>(null);
+
+  // Genel HTML component'leri
+  const generalComponents = [
+    {
+      name: 'HTML Elements',
+      components: [
+        {
+          name: 'Div',
+          description: 'Generic container element',
+          category: 'Layout',
+          props: {
+            className: 'string',
+            style: 'CSSProperties',
+            children: 'ReactNode',
+            id: 'string',
+            isContainer: 'boolean',
+          },
+          initialValues: {
+            className: '',
+            style: { 
+              padding: '16px', 
+              border: '1px dashed #ccc', 
+              borderRadius: '4px', 
+              minHeight: '60px',
+              width: '100%'
+            },
+            children: 'Drop components here',
+            id: '',
+            isContainer: true,
+          },
+          type: 'container',
+        },
+        {
+          name: 'Span',
+          description: 'Inline text container',
+          category: 'Text',
+          props: {
+            className: 'string',
+            style: 'CSSProperties',
+            children: 'ReactNode',
+          },
+          initialValues: {
+            className: '',
+            style: {},
+            children: 'Span Text',
+          },
+          type: 'component',
+        },
+        {
+          name: 'Label',
+          description: 'Form label element',
+          category: 'Form',
+          props: {
+            htmlFor: 'string',
+            className: 'string',
+            children: 'ReactNode',
+          },
+          initialValues: {
+            htmlFor: '',
+            className: '',
+            children: 'Label Text',
+          },
+          type: 'component',
+        },
+        {
+          name: 'Input',
+          description: 'Form input element',
+          category: 'Form',
+          props: {
+            type: 'text | email | password | number',
+            placeholder: 'string',
+            value: 'string',
+            className: 'string',
+          },
+          initialValues: {
+            type: 'text',
+            placeholder: 'Enter text...',
+            value: '',
+            className: '',
+          },
+          type: 'component',
+        },
+        {
+          name: 'Button',
+          description: 'Clickable button element',
+          category: 'Interactive',
+          props: {
+            type: 'button | submit | reset',
+            className: 'string',
+            children: 'ReactNode',
+            disabled: 'boolean',
+          },
+          initialValues: {
+            type: 'button',
+            className: '',
+            children: 'Click Me',
+            disabled: false,
+          },
+          type: 'component',
+        },
+        {
+          name: 'Image',
+          description: 'Image element',
+          category: 'Media',
+          props: {
+            src: 'string',
+            alt: 'string',
+            className: 'string',
+            width: 'number',
+            height: 'number',
+          },
+          initialValues: {
+            src: 'https://via.placeholder.com/300x200',
+            alt: 'Image description',
+            className: '',
+            width: 300,
+            height: 200,
+          },
+          type: 'component',
+        },
+      ] as ComponentMetadata[],
+    },
+  ];
 
   const handleHeaderMouseDown = (e: React.MouseEvent) => {
     if (!sidebarRef.current) return;
@@ -231,12 +372,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
     zIndex: 1001,
   };
 
-  const renderComponents = () => {
-    if (!components || components.length === 0) {
+  const renderComponents = (componentList: Array<{ name: string; components: ComponentMetadata[] }>) => {
+    if (!componentList || componentList.length === 0) {
       return children;
     }
 
-    return components.map((lib) => (
+    return componentList.map((lib) => (
       <div key={lib.name} style={{ marginBottom: '24px' }}>
         <h4 style={{ 
           color: '#333', 
@@ -265,8 +406,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
               marginBottom: '12px',
               fontWeight: '500',
               textTransform: 'uppercase',
-              letterSpacing: '0.5px'
+              letterSpacing: '0.5px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
             }}>
+              <span style={{
+                backgroundColor: getCategoryColor(category),
+                color: 'white',
+                width: '20px',
+                height: '20px',
+                borderRadius: '4px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '12px',
+                fontWeight: 'bold',
+              }}>
+                {getCategoryIcon(category)}
+              </span>
               {category}
             </h5>
             {comps.map((comp) => (
@@ -276,6 +434,36 @@ export const Sidebar: React.FC<SidebarProps> = ({
         ))}
       </div>
     ));
+  };
+
+  const getCategoryColor = (category: string) => {
+    const colorMap: Record<string, string> = {
+      'Layout': '#3B82F6',      // Blue
+      'Basic': '#10B981',       // Green
+      'Form': '#8B5CF6',        // Purple
+      'Media': '#F59E0B',       // Orange
+      'Data Display': '#EC4899', // Pink
+      'Feedback': '#EF4444',    // Red
+      'Navigation': '#06B6D4',  // Cyan
+      'default': '#6B7280',     // Gray
+    };
+    
+    return colorMap[category] || colorMap.default;
+  };
+
+  const getCategoryIcon = (category: string) => {
+    const iconMap: Record<string, string> = {
+      'Layout': '⊞',      // Grid
+      'Basic': '◉',       // Circle
+      'Form': '▢',        // Square
+      'Media': '🖼️',      // Picture
+      'Data Display': '📊', // Chart
+      'Feedback': '💬',    // Message
+      'Navigation': '🧭',  // Compass
+      'default': '●',     // Dot
+    };
+    
+    return iconMap[category] || iconMap.default;
   };
 
   return (
@@ -293,8 +481,55 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
         <DraggableIcon />
       </div>
+
+      {/* Tabs */}
+      <div style={{
+        display: 'flex',
+        borderBottom: '1px solid #e9ecef',
+        backgroundColor: '#f8f9fa',
+      }}>
+        <button
+          onClick={() => setActiveTab('pinnate')}
+          style={{
+            flex: 1,
+            padding: '12px 16px',
+            border: 'none',
+            backgroundColor: activeTab === 'pinnate' ? '#ffffff' : 'transparent',
+            color: activeTab === 'pinnate' ? '#007bff' : '#666',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: activeTab === 'pinnate' ? '600' : '400',
+            borderBottom: activeTab === 'pinnate' ? '2px solid #007bff' : 'none',
+            transition: 'all 0.2s ease',
+          }}
+        >
+          Pinnate Components
+        </button>
+        <button
+          onClick={() => setActiveTab('general')}
+          style={{
+            flex: 1,
+            padding: '12px 16px',
+            border: 'none',
+            backgroundColor: activeTab === 'general' ? '#ffffff' : 'transparent',
+            color: activeTab === 'general' ? '#007bff' : '#666',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: activeTab === 'general' ? '600' : '400',
+            borderBottom: activeTab === 'general' ? '2px solid #007bff' : 'none',
+            transition: 'all 0.2s ease',
+          }}
+        >
+          General Elements
+        </button>
+      </div>
+
       <div style={contentStyle}>
-        {renderComponents()}
+        {activeTab === 'pinnate' ? (
+          renderComponents(components)
+        ) : (
+          renderComponents(generalComponents)
+        )}
       </div>
       
       {/* Resize Handle */}

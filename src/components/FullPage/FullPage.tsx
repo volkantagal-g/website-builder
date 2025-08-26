@@ -1,4 +1,4 @@
-import React, { forwardRef, CSSProperties, useState } from 'react';
+import React, { forwardRef, CSSProperties, useState, useEffect } from 'react';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { FiEdit3, FiTrash2 } from 'react-icons/fi';
@@ -10,6 +10,8 @@ export interface CanvasComponent {
   id: string;
   metadata: ComponentMetadata;
   props: Record<string, any>;
+  children?: CanvasComponent[]; // Container component'ler için nested component'ler
+  parentId?: string; // Parent container'ın ID'si
 }
 
 export interface FullPageProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -29,7 +31,11 @@ const DraggableComponent: React.FC<{
   deleteComponent: (id: string) => void;
   isSelected: boolean;
   selectComponent: (id: string) => void;
-}> = ({ component, index, moveComponent, deleteComponent, isSelected, selectComponent }) => {
+  addComponentToContainer?: (containerId: string, metadata: ComponentMetadata) => void;
+  setCanvasComponents?: React.Dispatch<React.SetStateAction<CanvasComponent[]>>;
+  selectedComponentId?: string | null;
+  onContainerHover?: (containerId: string, isHovering: boolean) => void;
+}> = ({ component, index, moveComponent, deleteComponent, isSelected, selectComponent, addComponentToContainer, setCanvasComponents, selectedComponentId, onContainerHover }) => {
   const [{ isDragging }, drag] = useDrag({
     type: 'COMPONENT',
     item: { index },
@@ -42,15 +48,170 @@ const DraggableComponent: React.FC<{
     accept: 'COMPONENT',
     hover: (item: { index: number }) => {
       if (item.index === index) return;
+      // Container component'ler için pozisyon değişikliği yapma
+      if (component.metadata.type === 'container') return;
       moveComponent(item.index, index);
       item.index = index;
     },
+    canDrop: () => component.metadata.type !== 'container',
   });
+
+  // Container component'ler için drop zone
+  const [{ isOver: isOverContainer }, containerDrop] = useDrop({
+    accept: 'SIDEBAR_COMPONENT',
+    drop: (item: any) => {
+      console.log('Container drop triggered:', {
+        containerId: component.id,
+        componentName: item.component?.name,
+        isContainer: component.metadata.type === 'container',
+        itemType: item.component?.type,
+        fullItem: item
+      });
+      
+      if (addComponentToContainer && component.metadata.type === 'container' && item.component) {
+        console.log('Adding component to container');
+        addComponentToContainer(component.id, item.component);
+      } else {
+        console.log('Cannot add to container:', {
+          hasAddFunction: !!addComponentToContainer,
+          componentType: component.metadata.type,
+          hasComponent: !!item.component
+        });
+      }
+    },
+    collect: (monitor) => ({
+      isOver: monitor.isOver(),
+    }),
+    canDrop: (_item: any) => {
+      const canDrop = component.metadata.type === 'container';
+      
+      console.log('Container canDrop check:', { 
+        componentId: component.id, 
+        componentType: component.metadata.type, 
+        canDrop 
+      });
+      return canDrop;
+    },
+  });
+
+  // Container hover durumunu global state'e bildir
+  useEffect(() => {
+    if (component.metadata.type === 'container' && onContainerHover) {
+      onContainerHover(component.id, isOverContainer);
+    }
+  }, [isOverContainer, component.id, component.metadata.type, onContainerHover]);
 
   const renderComponent = () => {
     if (component.metadata.p) {
       const ComponentToRender = component.metadata.p;
       return <ComponentToRender {...component.props} />;
+    }
+    
+    // Container component'ler için özel render
+    if (component.metadata.type === 'container') {
+      return (
+        <div 
+          style={{
+            ...component.props.style,
+            position: 'relative',
+            minHeight: '60px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            border: '1px dashed #ccc',
+            borderRadius: '4px',
+            padding: '16px',
+            backgroundColor: 'transparent',
+          }}
+          className={component.props.className}
+          id={component.props.id}
+        >
+          {/* Container içeriği - sadece children yoksa göster */}
+          {(!component.children || component.children.length === 0) && (
+            <div style={{ 
+              color: '#666', 
+              fontSize: '14px', 
+              textAlign: 'center',
+              pointerEvents: 'none',
+              marginBottom: '8px',
+              zIndex: 1,
+            }}>
+              {component.props.children}
+            </div>
+          )}
+          
+          {/* Nested component'ler */}
+          {component.children && component.children.length > 0 && (
+            <div style={{ 
+              width: '100%', 
+              zIndex: 11,
+            }}>
+              {component.children.map((child, childIndex) => (
+                <DraggableComponent
+                  key={child.id}
+                  component={child}
+                  index={childIndex}
+                  moveComponent={(dragIndex, hoverIndex) => {
+                    // Nested component'ler arası sıralama
+                    console.log('Moving nested component:', { dragIndex, hoverIndex, containerId: component.id });
+                  }}
+                  deleteComponent={(childId) => {
+                    // Nested component'i sil
+                    console.log('Deleting nested component:', { childId, containerId: component.id });
+                    setCanvasComponents?.(prev => 
+                      prev.map(comp => 
+                        comp.id === component.id 
+                          ? { ...comp, children: comp.children?.filter(c => c.id !== childId) || [] }
+                          : comp
+                      )
+                    );
+                  }}
+                  isSelected={selectedComponentId === child.id}
+                  selectComponent={selectComponent}
+                  addComponentToContainer={addComponentToContainer}
+                  setCanvasComponents={setCanvasComponents}
+                  selectedComponentId={selectedComponentId}
+                />
+              ))}
+            </div>
+          )}
+          
+          {/* Container drop zone - React DnD nested list example gibi */}
+          <div
+            ref={containerDrop}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              border: isOverContainer ? '2px dashed #007bff' : '2px dashed transparent',
+              borderRadius: '4px',
+              backgroundColor: isOverContainer ? 'rgba(0, 123, 255, 0.1)' : 'transparent',
+              transition: 'all 0.2s ease',
+              pointerEvents: 'auto',
+              zIndex: 10,
+            }}
+            className="container-drop-zone"
+          >
+            {isOverContainer && (
+              <div style={{
+                color: '#007bff',
+                fontSize: '14px',
+                fontWeight: '600',
+                textAlign: 'center',
+                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                padding: '8px 16px',
+                borderRadius: '4px',
+                border: '1px solid #007bff',
+              }}>
+                Drop component here
+              </div>
+            )}
+          </div>
+        </div>
+      );
     }
     
     return (
@@ -61,11 +222,18 @@ const DraggableComponent: React.FC<{
     );
   };
 
+  console.log('DraggableComponent render:', {
+    componentId: component.id,
+    componentType: component.metadata.type,
+    componentName: component.metadata.name,
+    hasAddFunction: !!addComponentToContainer
+  });
+
   return (
     <div
       ref={(node) => drag(drop(node))}
       style={{
-        width: "fit-content",
+        width: component.metadata.type === 'container' ? '100%' : 'fit-content',
         opacity: isDragging ? 0.5 : 1,
         cursor: 'move',
         position: 'relative',
@@ -184,7 +352,11 @@ const DropZone: React.FC<{
   deleteComponent: (id: string) => void;
   selectedComponentId: string | null;
   selectComponent: (id: string) => void;
-}> = ({ onDrop, components, moveComponent, deleteComponent, selectedComponentId, selectComponent }) => {
+  addComponentToContainer?: (containerId: string, metadata: ComponentMetadata) => void;
+  setCanvasComponents?: React.Dispatch<React.SetStateAction<CanvasComponent[]>>;
+  isOverAnyContainer: boolean;
+  onContainerHover?: (containerId: string, isHovering: boolean) => void;
+}> = ({ onDrop, components, moveComponent, deleteComponent, selectedComponentId, selectComponent, addComponentToContainer, setCanvasComponents, isOverAnyContainer, onContainerHover }) => {
   const [{ isOver: isOverCurrent }, drop] = useDrop({
     accept: 'SIDEBAR_COMPONENT',
     drop: (item: { component: ComponentMetadata }) => {
@@ -193,6 +365,17 @@ const DropZone: React.FC<{
     collect: (monitor) => ({
       isOver: monitor.isOver({ shallow: true }),
     }),
+    canDrop: () => {
+      // Mouse herhangi bir container üzerinde hover varsa drop yapma
+      const canDrop = !isOverAnyContainer;
+      
+      console.log('Ana DropZone canDrop check:', { 
+        isOverAnyContainer, 
+        canDrop 
+      });
+      
+      return canDrop;
+    },
   });
 
   return (
@@ -203,18 +386,14 @@ const DropZone: React.FC<{
         minHeight: '200px',
         border: isOverCurrent ? '2px dashed #007bff' : '2px dashed #ddd',
         borderRadius: '8px',
-        backgroundColor: isOverCurrent ? '#f0f8ff' : 'transparent',
+        //backgroundColor: isOverCurrent ? 'transparent' : 'transparent',
         padding: '20px',
         marginBottom: '16px',
         transition: 'all 0.2s ease',
         overflow: 'auto',
       }}
     >
-      {isOverCurrent ? (
-        <div style={{ color: '#007bff', fontSize: '16px', fontWeight: '600', textAlign: 'center' }}>
-          
-        </div>
-      ) : components.length === 0 ? (
+      {components.length === 0 ? (
         <div style={{ color: '#999', fontSize: '14px', textAlign: 'center' }}>
           Sidebar'dan component sürükleyin
         </div>
@@ -229,6 +408,10 @@ const DropZone: React.FC<{
               deleteComponent={deleteComponent}
               isSelected={selectedComponentId === component.id}
               selectComponent={selectComponent}
+              addComponentToContainer={addComponentToContainer}
+              setCanvasComponents={setCanvasComponents}
+              selectedComponentId={selectedComponentId}
+              onContainerHover={onContainerHover}
             />
           ))}
         </div>
@@ -250,6 +433,7 @@ export const FullPage = forwardRef<HTMLDivElement, FullPageProps>(
   ) => {
     const [canvasComponents, setCanvasComponents] = useState<CanvasComponent[]>([]);
     const [selectedComponentId, setSelectedComponentId] = useState<string | null>(null);
+    const [isOverAnyContainer, setIsOverAnyContainer] = useState(false);
 
     // Global click handler - component dışına tıklandığında seçimi kapat
     const handleCanvasClick = (e: React.MouseEvent) => {
@@ -260,15 +444,45 @@ export const FullPage = forwardRef<HTMLDivElement, FullPageProps>(
       }
     };
 
-    const addComponent = (metadata: ComponentMetadata) => {
+    const addComponent = (metadata: ComponentMetadata, parentId?: string) => {
+      console.log('addComponent called:', { componentName: metadata.name, parentId });
+      
       const newComponent: CanvasComponent = {
         id: `component-${Date.now()}-${Math.random()}`,
         metadata,
         props: { ...metadata.initialValues },
+        children: [],
+        parentId,
       };
-      setCanvasComponents(prev => [...prev, newComponent]);
-      // Yeni eklenen component'i otomatik seç
-      setSelectedComponentId(newComponent.id);
+      
+      if (parentId) {
+        console.log('Adding to container:', parentId);
+        // Container'a component ekle
+        setCanvasComponents(prev => {
+          const updated = prev.map(comp => 
+            comp.id === parentId 
+              ? { ...comp, children: [...(comp.children || []), newComponent] }
+              : comp
+          );
+          console.log('Updated canvas components:', updated);
+          return updated;
+        });
+        
+        // Container'ı selected yap
+        setSelectedComponentId(parentId);
+      } else {
+        console.log('Adding to main canvas');
+        // Ana canvas'a component ekle
+        setCanvasComponents(prev => [...prev, newComponent]);
+        
+        // Yeni eklenen component'i otomatik seç
+        setSelectedComponentId(newComponent.id);
+      }
+    };
+
+    const addComponentToContainer = (containerId: string, metadata: ComponentMetadata) => {
+      console.log('addComponentToContainer called:', { containerId, componentName: metadata.name });
+      addComponent(metadata, containerId);
     };
 
     const moveComponent = (dragIndex: number, hoverIndex: number) => {
@@ -345,6 +559,12 @@ export const FullPage = forwardRef<HTMLDivElement, FullPageProps>(
               deleteComponent={deleteComponent}
               selectedComponentId={selectedComponentId}
               selectComponent={selectComponent}
+              addComponentToContainer={addComponentToContainer}
+              setCanvasComponents={setCanvasComponents}
+              isOverAnyContainer={isOverAnyContainer}
+              onContainerHover={(_containerId, isHovering) => {
+                setIsOverAnyContainer(isHovering);
+              }}
             />
             
             {children}
@@ -357,8 +577,8 @@ export const FullPage = forwardRef<HTMLDivElement, FullPageProps>(
             backgroundColor="#ffffff"
             shadow={true}
             components={components}
-            onDrag={(position) => console.log('Sürükleniyor:', position)}
-            onDragEnd={(position) => console.log('Sürükleme bitti:', position)}
+            onDrag={() => {}}
+            onDragEnd={() => {}}
           />
 
           <PropsMenu
