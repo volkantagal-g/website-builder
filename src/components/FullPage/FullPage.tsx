@@ -4,16 +4,7 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import { FiEdit3, FiTrash2 } from 'react-icons/fi';
 import { Sidebar } from '../Sidebar';
 import { CanvasActions } from '../CanvasActions';
-
-export interface ComponentMetadata {
-  name: string;
-  description: string;
-  category?: string;
-  props: Record<string, string>;
-  initialValues: Record<string, any>;
-  type: string;
-  p?: React.ComponentType<any>;
-}
+import { PropsMenu, ComponentMetadata } from '../PropsMenu';
 
 export interface CanvasComponent {
   id: string;
@@ -74,10 +65,15 @@ const DraggableComponent: React.FC<{
     <div
       ref={(node) => drag(drop(node))}
       style={{
+        width: "fit-content",
         opacity: isDragging ? 0.5 : 1,
         cursor: 'move',
         position: 'relative',
         display: 'block',
+        border: isSelected ? '2px solid #007bff' : '2px solid transparent',
+        borderRadius: '6px',
+        padding: '4px',
+        transition: 'all 0.2s ease',
       }}
     >
       {/* Görünmez overlay div */}
@@ -106,7 +102,7 @@ const DraggableComponent: React.FC<{
           display: 'flex',
           flexDirection: 'column',
           gap: '4px',
-          zIndex: 20,
+          zIndex: 1000,
         }}>
           <button
             onClick={(e) => {
@@ -257,8 +253,10 @@ export const FullPage = forwardRef<HTMLDivElement, FullPageProps>(
 
     // Global click handler - component dışına tıklandığında seçimi kapat
     const handleCanvasClick = (e: React.MouseEvent) => {
-      if (e.target === e.currentTarget) {
-        setSelectedComponentId(null);
+      // PropsMenu alanına tıklandıysa seçimi kapatma
+      const target = e.target as HTMLElement;
+      if (target.closest('[data-props-menu]')) {
+        return;
       }
     };
 
@@ -269,6 +267,8 @@ export const FullPage = forwardRef<HTMLDivElement, FullPageProps>(
         props: { ...metadata.initialValues },
       };
       setCanvasComponents(prev => [...prev, newComponent]);
+      // Yeni eklenen component'i otomatik seç
+      setSelectedComponentId(newComponent.id);
     };
 
     const moveComponent = (dragIndex: number, hoverIndex: number) => {
@@ -279,6 +279,11 @@ export const FullPage = forwardRef<HTMLDivElement, FullPageProps>(
         newComponents.splice(hoverIndex, 0, draggedComponent);
         return newComponents;
       });
+      // Drag edilen component'i otomatik seç
+      const movedComponent = canvasComponents[hoverIndex];
+      if (movedComponent) {
+        setSelectedComponentId(movedComponent.id);
+      }
     };
 
     const deleteComponent = (componentId: string) => {
@@ -288,6 +293,22 @@ export const FullPage = forwardRef<HTMLDivElement, FullPageProps>(
 
     const selectComponent = (componentId: string) => {
       setSelectedComponentId(componentId);
+    };
+
+    const handlePropsChange = (componentId: string, newProps: Record<string, any>) => {
+      setCanvasComponents(prev => 
+        prev.map(comp => 
+          comp.id === componentId 
+            ? { ...comp, props: newProps }
+            : comp
+        )
+      );
+    };
+
+    const getSelectedComponentMetadata = (): ComponentMetadata | null => {
+      if (!selectedComponentId) return null;
+      const component = canvasComponents.find(comp => comp.id === selectedComponentId);
+      return component ? component.metadata : null;
     };
 
     const containerStyle: CSSProperties = {
@@ -338,6 +359,12 @@ export const FullPage = forwardRef<HTMLDivElement, FullPageProps>(
             components={components}
             onDrag={(position) => console.log('Sürükleniyor:', position)}
             onDragEnd={(position) => console.log('Sürükleme bitti:', position)}
+          />
+
+          <PropsMenu
+            selectedComponent={getSelectedComponentMetadata()}
+            onPropsChange={handlePropsChange}
+            componentId={selectedComponentId || undefined}
           />
         </div>
       </DndProvider>
