@@ -27,11 +27,14 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "i18next": "^23.7.16",
     "pinnate": "file:../pinnate",
     "react": "^18.2.0",
+    "react-dnd": "^16.0.1",
+    "react-dnd-html5-backend": "^16.0.1",
     "react-dom": "^18.2.0",
-    "i18next": "^23.7.16",
-    "react-i18next": "^14.0.5"
+    "react-i18next": "^14.0.5",
+    "react-icons": "^5.5.0"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^25.0.7",

@@ -1,18 +1,21 @@
 import { createRoot } from 'react-dom/client';
 import { FullPage } from './components/FullPage';
-import { PinnateProvider, Components } from 'pinnate';
+import { PinnateProvider, Components, p } from 'pinnate';
 import './styles/global.css';
 import 'pinnate/dist/index.css';
 
 const App = () => {
-  console.log(Components);
+  // Components'i p key'i ile map et
+  const componentsWithP = Components.map(comp => ({
+    ...comp,
+    p: p[comp.name] // p[comp.name] ile gerçek component'i al
+  }));
+
+  //console.log(componentsWithP);
   
   return (
     <PinnateProvider>
-      <FullPage>
-        <h1>Website Builder</h1>
-        <p>Development ortamına hoş geldiniz!</p>
-        <button className="mt-3">Örnek Buton</button>
+      <FullPage components={[{name: 'Pinnate', components: componentsWithP}]}>
       </FullPage>
     </PinnateProvider>
   );
