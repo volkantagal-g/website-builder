@@ -1,23 +1,47 @@
 import React, { useState } from 'react';
-import { FiChevronUp, FiChevronDown } from 'react-icons/fi';
+import { FiChevronUp, FiChevronDown, FiGrid, FiList, FiMove } from 'react-icons/fi';
 import { ComponentMetadata } from '../FullPage';
 
 export interface PropsMenuProps {
   selectedComponent: ComponentMetadata | null;
   onPropsChange: (componentId: string, newProps: Record<string, any>) => void;
   componentId?: string;
+  canvasData?: any; // Component ağacı için
+  onComponentMove?: (dragId: string, targetId: string, position: 'before' | 'after' | 'inside') => void; // Component taşıma için
+  onComponentHover?: (componentId: string | undefined) => void; // Component hover için
+  onComponentSelect?: (componentId: string) => void; // Component seçimi için
 }
 
 export const PropsMenu: React.FC<PropsMenuProps> = ({ 
   selectedComponent, 
   onPropsChange, 
-  componentId 
+  componentId,
+  canvasData,
+  onComponentMove,
+  onComponentHover,
+  onComponentSelect
 }) => {
   const [isMinimized, setIsMinimized] = useState(true); // Başlangıçta minimize
   const [localProps, setLocalProps] = useState<Record<string, any>>({});
   const [height, setHeight] = useState(300);
   const [previousHeight, setPreviousHeight] = useState(300);
   const [isResizing, setIsResizing] = useState(false);
+  const [activeTab, setActiveTab] = useState('properties'); // Yeni: active tab
+  const [draggedComponentId, setDraggedComponentId] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
+  const [dragPosition, setDragPosition] = useState<'before' | 'after' | 'inside' | null>(null);
+  
+  // Debug için console.log
+  console.log('PropsMenu render:', {
+    isMinimized,
+    height,
+    activeTab,
+    selectedComponent: !!selectedComponent,
+    canvasData: canvasData?.length || 0,
+    draggedComponentId,
+    dragOverId,
+    dragPosition
+  });
 
   // Component değiştiğinde local props'u güncelle
   React.useEffect(() => {
@@ -81,6 +105,188 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
     if (componentId) {
       onPropsChange(componentId, localProps);
     }
+  };
+
+  // Drag & Drop handlers
+  const handleDragStart = (e: React.DragEvent, componentId: string) => {
+    e.dataTransfer.setData('text/plain', componentId);
+    setDraggedComponentId(componentId);
+    console.log('Drag started:', componentId);
+  };
+
+  const handleDragOver = (e: React.DragEvent, targetId: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    
+    const rect = e.currentTarget.getBoundingClientRect();
+    const y = e.clientY - rect.top;
+    const height = rect.height;
+    
+    let position: 'before' | 'after' | 'inside';
+    
+    if (y < height * 0.3) {
+      position = 'before';
+    } else if (y > height * 0.7) {
+      position = 'after';
+    } else {
+      position = 'inside';
+    }
+    
+    setDragOverId(targetId);
+    setDragPosition(position);
+    
+    console.log('Drag over:', { targetId, position });
+  };
+
+  const handleDragLeave = () => {
+    setDragOverId(null);
+    setDragPosition(null);
+  };
+
+  const handleDrop = (e: React.DragEvent, targetId: string) => {
+    e.preventDefault();
+    
+    const draggedId = e.dataTransfer.getData('text/plain');
+    
+    if (draggedId && targetId && draggedId !== targetId && onComponentMove) {
+      const position = dragPosition || 'after';
+      console.log('Drop:', { draggedId, targetId, position });
+      
+      onComponentMove(draggedId, targetId, position);
+    }
+    
+    // Reset drag state
+    setDraggedComponentId(null);
+    setDragOverId(null);
+    setDragPosition(null);
+  };
+
+  // Component ağacını recursive olarak render et
+  const renderComponentTree = (components: any[], level: number = 0) => {
+    if (!components || components.length === 0) {
+      return (
+        <div style={{ 
+          padding: '8px 16px', 
+          color: '#999', 
+          fontSize: '12px',
+          fontStyle: 'italic'
+        }}>
+          No components
+        </div>
+      );
+    }
+
+    return components.map((component, index) => {
+      const isDragged = draggedComponentId === component.id;
+      const isDragOver = dragOverId === component.id;
+      const isContainer = component.metadata?.type === 'container';
+      
+      return (
+        <div key={component.id || index} style={{ marginLeft: level * 20 }}>
+          {/* Drop zone before component */}
+          {isDragOver && dragPosition === 'before' && (
+            <div style={{
+              height: '4px',
+              backgroundColor: '#007bff',
+              margin: '4px 0',
+              borderRadius: '2px',
+              opacity: 0.8,
+            }} />
+          )}
+          
+          <div 
+            draggable
+            onDragStart={(e) => handleDragStart(e, component.id)}
+            onDragOver={(e) => handleDragOver(e, component.id)}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, component.id)}
+            onMouseEnter={() => onComponentHover?.(component.id)}
+            onMouseLeave={() => onComponentHover?.(undefined)}
+            onClick={() => onComponentSelect?.(component.id)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              padding: '6px 12px',
+              cursor: 'pointer',
+              borderRadius: '4px',
+              transition: 'all 0.2s ease',
+              fontSize: '13px',
+              backgroundColor: isDragged ? '#e3f2fd' : 
+                             isDragOver ? '#f0f8ff' : 'transparent',
+              border: isDragged ? '1px dashed #007bff' : 
+                     isDragOver ? '1px solid #007bff' : '1px solid transparent',
+              opacity: isDragged ? 0.5 : 1,
+              // Hover border ekle - kırmızı border
+              boxShadow: isDragOver ? '0 0 0 2px #ff4444' : 'none',
+            }}
+          >
+            <FiMove size={12} style={{ marginRight: '8px', color: '#666', opacity: 0.7 }} />
+            <FiGrid size={12} style={{ marginRight: '8px', color: '#666' }} />
+            <span style={{ color: '#333', fontWeight: '500' }}>
+              {component.metadata?.name || component.name || 'Unknown Component'}
+            </span>
+            {isContainer && (
+              <span style={{ 
+                marginLeft: '8px', 
+                color: '#007bff', 
+                fontSize: '11px',
+                backgroundColor: '#e3f2fd',
+                padding: '2px 6px',
+                borderRadius: '10px'
+              }}>
+                Container
+              </span>
+            )}
+            {component.children && component.children.length > 0 && (
+              <span style={{ 
+                marginLeft: '8px', 
+                color: '#666', 
+                fontSize: '11px',
+                backgroundColor: '#e9ecef',
+                padding: '2px 6px',
+                borderRadius: '10px'
+              }}>
+                {component.children.length}
+              </span>
+            )}
+          </div>
+          
+          {/* Drop zone inside container */}
+          {isContainer && isDragOver && dragPosition === 'inside' && (
+            <div style={{
+              margin: '4px 0',
+              padding: '8px',
+              backgroundColor: '#e3f2fd',
+              border: '1px dashed #007bff',
+              borderRadius: '4px',
+              textAlign: 'center',
+              fontSize: '11px',
+              color: '#007bff',
+            }}>
+              Drop here to nest
+            </div>
+          )}
+          
+          {/* Nested components */}
+          {component.children && component.children.length > 0 && (
+            <div style={{ marginLeft: '16px' }}>
+              {renderComponentTree(component.children, level + 1)}
+            </div>
+          )}
+          
+          {/* Drop zone after component */}
+          {isDragOver && dragPosition === 'after' && (
+            <div style={{
+              height: '4px',
+              backgroundColor: '#007bff',
+              margin: '4px 0',
+              borderRadius: '2px',
+              opacity: 0.8,
+            }} />
+          )}
+        </div>
+      );
+    });
   };
 
   const renderPropInput = (propName: string, propType: string, currentValue: any) => {
@@ -289,10 +495,11 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
         justifyContent: 'space-between',
         padding: '0 20px',
         backgroundColor: '#f8f9fa',
+        flexShrink: 0, // Prevent shrinking
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <h3 style={{ margin: 0, fontSize: '16px', color: '#333' }}>
-            Component Props
+            Component Panel
           </h3>
           {selectedComponent && (
             <span style={{
@@ -339,53 +546,150 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
         </div>
       </div>
 
-      {/* Content */}
+      {/* Tab Menu - Chrome DevTools Style */}
+      <div style={{
+        height: '40px',
+        backgroundColor: '#f8f9fa',
+        borderBottom: '1px solid #e9ecef',
+        display: 'flex',
+        alignItems: 'center',
+        padding: '0 20px',
+        flexShrink: 0, // Prevent shrinking
+      }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          height: '100%',
+          gap: '0',
+        }}>
+          {/* Properties Tab */}
+          <button
+            onClick={() => setActiveTab('properties')}
+            style={{
+              height: '100%',
+              padding: '0 16px',
+              backgroundColor: activeTab === 'properties' ? '#ffffff' : 'transparent',
+              border: 'none',
+              borderBottom: activeTab === 'properties' ? '2px solid #007bff' : '2px solid transparent',
+              color: activeTab === 'properties' ? '#007bff' : '#666',
+              fontSize: '13px',
+              fontWeight: activeTab === 'properties' ? '600' : '400',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              borderRadius: '0',
+            }}
+          >
+            <FiGrid size={14} />
+            Properties
+          </button>
+
+          {/* Tree View Tab */}
+          <button
+            onClick={() => setActiveTab('tree')}
+            style={{
+              height: '100%',
+              padding: '0 16px',
+              backgroundColor: activeTab === 'tree' ? '#ffffff' : 'transparent',
+              border: 'none',
+              borderBottom: activeTab === 'tree' ? '2px solid #007bff' : '2px solid transparent',
+              color: activeTab === 'tree' ? '#007bff' : '#666',
+              fontSize: '13px',
+              fontWeight: activeTab === 'tree' ? '600' : '400',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              borderRadius: '0',
+            }}
+          >
+            <FiList size={14} />
+            Tree View
+          </button>
+        </div>
+      </div>
+
+      {/* Tab Content */}
       <div style={{
         flex: 1,
-        padding: '20px',
         overflow: 'auto',
         opacity: isMinimized ? 0 : 1,
         transform: isMinimized ? 'translateY(10px)' : 'translateY(0)',
         transition: isResizing ? 'none' : 'opacity 0.3s ease, transform 0.3s ease',
+        minHeight: 0, // Allow flex shrinking
       }}>
-        {!selectedComponent ? (
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            height: '100%',
-            color: '#999',
-            fontSize: '14px',
-          }}>
-            Select a component to edit its props
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {Object.entries(selectedComponent.props).map(([propName, propType]) => (
-              <div key={propName} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <label style={{
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  color: '#333',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}>
-                  <span>{propName}</span>
-                  <span style={{
-                    fontSize: '12px',
-                    color: '#666',
-                    fontFamily: 'monospace',
-                    backgroundColor: '#f8f9fa',
-                    padding: '2px 6px',
-                    borderRadius: '3px',
-                  }}>
-                    {propType}
-                  </span>
-                </label>
-                {renderPropInput(propName, propType, selectedComponent.initialValues[propName])}
+        {activeTab === 'properties' && (
+          <div style={{ padding: '20px' }}>
+            {!selectedComponent ? (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '100%',
+                color: '#999',
+                fontSize: '14px',
+              }}>
+                Select a component to edit its props
               </div>
-            ))}
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {Object.entries(selectedComponent.props).map(([propName, propType]) => (
+                  <div key={propName} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <label style={{
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      color: '#333',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    }}>
+                      <span>{propName}</span>
+                      <span style={{
+                        fontSize: '12px',
+                        color: '#666',
+                        fontFamily: 'monospace',
+                        backgroundColor: '#f8f9fa',
+                        padding: '2px 6px',
+                        borderRadius: '3px',
+                      }}>
+                        {propType}
+                      </span>
+                    </label>
+                    {renderPropInput(propName, propType, selectedComponent.initialValues[propName])}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'tree' && (
+          <div style={{
+            padding: '8px 0',
+            backgroundColor: '#ffffff',
+          }}>
+            <div style={{
+              padding: '8px 20px',
+              fontSize: '12px',
+              fontWeight: '600',
+              color: '#666',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+              borderBottom: '1px solid #f0f0f0',
+              backgroundColor: '#fafafa',
+            }}>
+              Component Tree - Drag to reorder or nest
+            </div>
+            <div style={{
+              maxHeight: '200px',
+              overflow: 'auto',
+              padding: '8px 0',
+            }}>
+              {renderComponentTree(canvasData || [])}
+            </div>
           </div>
         )}
       </div>

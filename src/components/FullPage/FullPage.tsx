@@ -46,7 +46,8 @@ const DraggableComponent: React.FC<{
   setCanvasComponents?: React.Dispatch<React.SetStateAction<CanvasComponent[]>>;
   selectedComponentId?: string | null;
   onContainerHover?: (containerId: string, isHovering: boolean) => void;
-}> = ({ component, index, moveComponent, deleteComponent, isSelected, selectComponent, addComponentToContainer, setCanvasComponents, selectedComponentId, onContainerHover }) => {
+  hoveredComponentId?: string | null;
+}> = ({ component, index, moveComponent, deleteComponent, isSelected, selectComponent, addComponentToContainer, setCanvasComponents, selectedComponentId, onContainerHover, hoveredComponentId }) => {
   const [{ isDragging }, drag] = useDrag({
     type: 'COMPONENT',
     item: { index },
@@ -136,10 +137,13 @@ const DraggableComponent: React.FC<{
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            border: '1px dashed #ccc',
+            border: isSelected ? '1px dashed #007bff' : 
+                   hoveredComponentId === component.id ? '1px solid #ff4444' : '1px dashed #ccc',
             borderRadius: '4px',
             padding: '16px',
             backgroundColor: 'transparent',
+            transition: 'all 0.2s ease',
+            outlineOffset: '4px',
           }}
           className={component.props.className}
           id={component.props.id}
@@ -220,6 +224,7 @@ const DraggableComponent: React.FC<{
                   setCanvasComponents={setCanvasComponents}
                   selectedComponentId={selectedComponentId}
                   onContainerHover={onContainerHover}
+                  hoveredComponentId={hoveredComponentId}
                 />
               ))}
             </div>
@@ -241,6 +246,7 @@ const DraggableComponent: React.FC<{
               pointerEvents: 'auto',
               zIndex: 10,
             }}
+            onClick={() => selectComponent(component.id)}
             className="container-drop-zone"
           >
             {isOverContainer && (
@@ -404,7 +410,8 @@ const DropZone: React.FC<{
   setCanvasComponents?: React.Dispatch<React.SetStateAction<CanvasComponent[]>>;
   hoveredContainerId: string | null;
   onContainerHover?: (containerId: string, isHovering: boolean) => void;
-}> = ({ onDrop, components, moveComponent, deleteComponent, selectedComponentId, selectComponent, addComponentToContainer, setCanvasComponents, hoveredContainerId, onContainerHover }) => {
+  hoveredComponentId: string | null;
+}> = ({ onDrop, components, moveComponent, deleteComponent, selectedComponentId, selectComponent, addComponentToContainer, setCanvasComponents, hoveredContainerId, onContainerHover, hoveredComponentId }) => {
   const [{ isOver: isOverCurrent }, drop] = useDrop({
     accept: 'SIDEBAR_COMPONENT',
     drop: (item: { component: ComponentMetadata }) => {
@@ -460,6 +467,7 @@ const DropZone: React.FC<{
               setCanvasComponents={setCanvasComponents}
               selectedComponentId={selectedComponentId}
               onContainerHover={onContainerHover}
+              hoveredComponentId={hoveredComponentId}
             />
           ))}
         </div>
@@ -480,8 +488,9 @@ export const FullPage = forwardRef<HTMLDivElement, FullPageProps>(
     ref
   ) => {
     const [canvasComponents, setCanvasComponents] = useState<CanvasComponent[]>([]);
-    const [selectedComponentId, setSelectedComponentId] = useState<string | null>(null);
-    const [hoveredContainerId, setHoveredContainerId] = useState<string | null>(null);
+            const [selectedComponentId, setSelectedComponentId] = useState<string | null>(null);
+      const [hoveredContainerId, setHoveredContainerId] = useState<string | null>(null);
+      const [hoveredComponentId, setHoveredComponentId] = useState<string | null>(null);
 
     // Global click handler - component dışına tıklandığında seçimi kapat
     const handleCanvasClick = (e: React.MouseEvent) => {
@@ -651,6 +660,7 @@ export const FullPage = forwardRef<HTMLDivElement, FullPageProps>(
               addComponentToContainer={addComponentToContainer}
               setCanvasComponents={setCanvasComponents}
               hoveredContainerId={hoveredContainerId}
+              hoveredComponentId={hoveredComponentId}
               onContainerHover={(containerId, isHovering) => {
                 if (isHovering) {
                   // Yeni bir container hover ediliyor
@@ -681,6 +691,94 @@ export const FullPage = forwardRef<HTMLDivElement, FullPageProps>(
             selectedComponent={getSelectedComponentMetadata()}
             onPropsChange={handlePropsChange}
             componentId={selectedComponentId || undefined}
+            canvasData={canvasComponents}
+            onComponentHover={(componentId) => setHoveredComponentId(componentId || null)}
+            onComponentSelect={(componentId) => setSelectedComponentId(componentId)}
+            onComponentMove={(dragId, targetId, position) => {
+              console.log('Component move requested:', { dragId, targetId, position });
+              
+              // Component'leri recursive olarak bul ve taşı
+              const moveComponentInTree = (components: CanvasComponent[]): CanvasComponent[] => {
+                // Dragged component'i bul
+                const findComponent = (comps: CanvasComponent[]): CanvasComponent | undefined => {
+                  for (const comp of comps) {
+                    if (comp.id === dragId) {
+                      return comp;
+                    }
+                    if (comp.children && comp.children.length > 0) {
+                      const found = findComponent(comp.children);
+                      if (found) return found;
+                    }
+                  }
+                  return undefined;
+                };
+                
+                const draggedComponent: CanvasComponent | undefined = findComponent(components);
+                
+                if (!draggedComponent) {
+                  console.error('Dragged component not found:', dragId);
+                  return components;
+                }
+                
+                // Component'i kaldır
+                const removeComponent = (comps: CanvasComponent[]): CanvasComponent[] => {
+                  return comps.filter(comp => {
+                    if (comp.id === dragId) {
+                      return false;
+                    }
+                    if (comp.children && comp.children.length > 0) {
+                      comp.children = removeComponent(comp.children);
+                    }
+                    return true;
+                  });
+                };
+                
+                let newComponents = removeComponent([...components]);
+                
+                // Target'a component'i ekle
+                if (position === 'inside') {
+                  // Container'ın içine ekle
+                  const addToContainer = (comps: CanvasComponent[]): CanvasComponent[] => {
+                    return comps.map(comp => {
+                      if (comp.id === targetId) {
+                        return {
+                          ...comp,
+                          children: [...(comp.children || []), {
+                            ...draggedComponent!,
+                            parentId: comp.id
+                          }]
+                        };
+                      }
+                      if (comp.children && comp.children.length > 0) {
+                        return { ...comp, children: addToContainer(comp.children) };
+                      }
+                      return comp;
+                    });
+                  };
+                  
+                  newComponents = addToContainer(newComponents);
+                } else {
+                  // Before veya after için main canvas'da işle
+                  const targetIndex = newComponents.findIndex(c => c.id === targetId);
+                  if (targetIndex !== -1) {
+                    const componentToAdd = {
+                      ...draggedComponent,
+                      parentId: undefined
+                    };
+                    
+                    if (position === 'before') {
+                      newComponents.splice(targetIndex, 0, componentToAdd);
+                    } else {
+                      newComponents.splice(targetIndex + 1, 0, componentToAdd);
+                    }
+                  }
+                }
+                
+                return newComponents;
+              };
+              
+              setCanvasComponents(prev => moveComponentInTree(prev));
+            }}
           />
         </div>
       </DndProvider>
