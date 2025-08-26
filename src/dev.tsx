@@ -8,6 +8,7 @@ const App = () => {
   // Components'i p key'i ile map et
   const componentsWithP = Components.map(comp => ({
     ...comp,
+    category: comp.category || 'Uncategorized', // Fallback category
     p: p[comp.name] // p[comp.name] ile gerçek component'i al
   }));
 

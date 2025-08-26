@@ -1,15 +1,6 @@
 import React, { useState } from 'react';
 import { FiChevronUp, FiChevronDown } from 'react-icons/fi';
-
-export interface ComponentMetadata {
-  name: string;
-  description: string;
-  category?: string;
-  props: Record<string, string>;
-  initialValues: Record<string, any>;
-  type: string;
-  p?: React.ComponentType<any>;
-}
+import { ComponentMetadata } from '../FullPage';
 
 export interface PropsMenuProps {
   selectedComponent: ComponentMetadata | null;

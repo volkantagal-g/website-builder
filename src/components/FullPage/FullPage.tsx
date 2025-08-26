@@ -4,7 +4,18 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import { FiEdit3, FiTrash2 } from 'react-icons/fi';
 import { Sidebar } from '../Sidebar';
 import { CanvasActions } from '../CanvasActions';
-import { PropsMenu, ComponentMetadata } from '../PropsMenu';
+import { PropsMenu } from '../PropsMenu';
+
+// ComponentMetadata interface'ini burada tanımlayalım
+export interface ComponentMetadata {
+  name: string;
+  description: string;
+  category?: string;
+  props: Record<string, any>;
+  initialValues: Record<string, any>;
+  type: string;
+  p?: React.ComponentType<any>;
+}
 
 export interface CanvasComponent {
   id: string;
@@ -97,7 +108,13 @@ const DraggableComponent: React.FC<{
   // Container hover durumunu global state'e bildir
   useEffect(() => {
     if (component.metadata.type === 'container' && onContainerHover) {
-      onContainerHover(component.id, isOverContainer);
+      // Sadece bu container hover ediliyorsa callback'i çağır
+      if (isOverContainer) {
+        onContainerHover(component.id, true);
+      } else {
+        // Hover'dan çıkıldığında da bildir
+        onContainerHover(component.id, false);
+      }
     }
   }, [isOverContainer, component.id, component.metadata.type, onContainerHover]);
 
@@ -157,21 +174,52 @@ const DraggableComponent: React.FC<{
                     console.log('Moving nested component:', { dragIndex, hoverIndex, containerId: component.id });
                   }}
                   deleteComponent={(childId) => {
-                    // Nested component'i sil
+                    // Nested component'i sil - recursive olarak
                     console.log('Deleting nested component:', { childId, containerId: component.id });
-                    setCanvasComponents?.(prev => 
-                      prev.map(comp => 
-                        comp.id === component.id 
-                          ? { ...comp, children: comp.children?.filter(c => c.id !== childId) || [] }
-                          : comp
-                      )
-                    );
+                    if (setCanvasComponents) {
+                      const deleteFromContainerRecursive = (components: CanvasComponent[]): CanvasComponent[] => {
+                        return components.map(comp => {
+                          if (comp.id === component.id) {
+                            return { ...comp, children: comp.children?.filter(c => c.id !== childId) || [] };
+                          } else if (comp.children && comp.children.length > 0) {
+                            return { ...comp, children: deleteFromContainerRecursive(comp.children) };
+                          }
+                          return comp;
+                        });
+                      };
+                      
+                      setCanvasComponents(prev => deleteFromContainerRecursive(prev));
+                    }
                   }}
                   isSelected={selectedComponentId === child.id}
                   selectComponent={selectComponent}
-                  addComponentToContainer={addComponentToContainer}
+                  addComponentToContainer={(containerId, metadata) => {
+                    // Nested container'a component ekle - recursive olarak
+                    console.log('Adding to nested container:', { containerId, componentName: metadata.name });
+                    if (setCanvasComponents) {
+                      const addToNestedContainer = (components: CanvasComponent[]): CanvasComponent[] => {
+                        return components.map(comp => {
+                          if (comp.id === containerId) {
+                            return { ...comp, children: [...(comp.children || []), {
+                              id: `component-${Date.now()}-${Math.random()}`,
+                              metadata,
+                              props: { ...metadata.initialValues },
+                              children: [],
+                              parentId: containerId,
+                            }] };
+                          } else if (comp.children && comp.children.length > 0) {
+                            return { ...comp, children: addToNestedContainer(comp.children) };
+                          }
+                          return comp;
+                        });
+                      };
+                      
+                      setCanvasComponents(prev => addToNestedContainer(prev));
+                    }
+                  }}
                   setCanvasComponents={setCanvasComponents}
                   selectedComponentId={selectedComponentId}
+                  onContainerHover={onContainerHover}
                 />
               ))}
             </div>
@@ -354,9 +402,9 @@ const DropZone: React.FC<{
   selectComponent: (id: string) => void;
   addComponentToContainer?: (containerId: string, metadata: ComponentMetadata) => void;
   setCanvasComponents?: React.Dispatch<React.SetStateAction<CanvasComponent[]>>;
-  isOverAnyContainer: boolean;
+  hoveredContainerId: string | null;
   onContainerHover?: (containerId: string, isHovering: boolean) => void;
-}> = ({ onDrop, components, moveComponent, deleteComponent, selectedComponentId, selectComponent, addComponentToContainer, setCanvasComponents, isOverAnyContainer, onContainerHover }) => {
+}> = ({ onDrop, components, moveComponent, deleteComponent, selectedComponentId, selectComponent, addComponentToContainer, setCanvasComponents, hoveredContainerId, onContainerHover }) => {
   const [{ isOver: isOverCurrent }, drop] = useDrop({
     accept: 'SIDEBAR_COMPONENT',
     drop: (item: { component: ComponentMetadata }) => {
@@ -367,10 +415,10 @@ const DropZone: React.FC<{
     }),
     canDrop: () => {
       // Mouse herhangi bir container üzerinde hover varsa drop yapma
-      const canDrop = !isOverAnyContainer;
+      const canDrop = !hoveredContainerId;
       
       console.log('Ana DropZone canDrop check:', { 
-        isOverAnyContainer, 
+        hoveredContainerId, 
         canDrop 
       });
       
@@ -433,7 +481,7 @@ export const FullPage = forwardRef<HTMLDivElement, FullPageProps>(
   ) => {
     const [canvasComponents, setCanvasComponents] = useState<CanvasComponent[]>([]);
     const [selectedComponentId, setSelectedComponentId] = useState<string | null>(null);
-    const [isOverAnyContainer, setIsOverAnyContainer] = useState(false);
+    const [hoveredContainerId, setHoveredContainerId] = useState<string | null>(null);
 
     // Global click handler - component dışına tıklandığında seçimi kapat
     const handleCanvasClick = (e: React.MouseEvent) => {
@@ -457,13 +505,20 @@ export const FullPage = forwardRef<HTMLDivElement, FullPageProps>(
       
       if (parentId) {
         console.log('Adding to container:', parentId);
-        // Container'a component ekle
+        // Container'a component ekle - recursive olarak
         setCanvasComponents(prev => {
-          const updated = prev.map(comp => 
-            comp.id === parentId 
-              ? { ...comp, children: [...(comp.children || []), newComponent] }
-              : comp
-          );
+          const addToContainerRecursive = (components: CanvasComponent[]): CanvasComponent[] => {
+            return components.map(comp => {
+              if (comp.id === parentId) {
+                return { ...comp, children: [...(comp.children || []), newComponent] };
+              } else if (comp.children && comp.children.length > 0) {
+                return { ...comp, children: addToContainerRecursive(comp.children) };
+              }
+              return comp;
+            });
+          };
+          
+          const updated = addToContainerRecursive(prev);
           console.log('Updated canvas components:', updated);
           return updated;
         });
@@ -501,7 +556,20 @@ export const FullPage = forwardRef<HTMLDivElement, FullPageProps>(
     };
 
     const deleteComponent = (componentId: string) => {
-      setCanvasComponents(prev => prev.filter(comp => comp.id !== componentId));
+      setCanvasComponents(prev => {
+        const deleteFromContainerRecursive = (components: CanvasComponent[]): CanvasComponent[] => {
+          return components
+            .filter(comp => comp.id !== componentId)
+            .map(comp => {
+              if (comp.children && comp.children.length > 0) {
+                return { ...comp, children: deleteFromContainerRecursive(comp.children) };
+              }
+              return comp;
+            });
+        };
+        
+        return deleteFromContainerRecursive(prev);
+      });
       setSelectedComponentId(null);
     };
 
@@ -510,18 +578,39 @@ export const FullPage = forwardRef<HTMLDivElement, FullPageProps>(
     };
 
     const handlePropsChange = (componentId: string, newProps: Record<string, any>) => {
-      setCanvasComponents(prev => 
-        prev.map(comp => 
-          comp.id === componentId 
-            ? { ...comp, props: newProps }
-            : comp
-        )
-      );
+      setCanvasComponents(prev => {
+        const updatePropsRecursive = (components: CanvasComponent[]): CanvasComponent[] => {
+          return components.map(comp => {
+            if (comp.id === componentId) {
+              return { ...comp, props: newProps };
+            } else if (comp.children && comp.children.length > 0) {
+              return { ...comp, children: updatePropsRecursive(comp.children) };
+            }
+            return comp;
+          });
+        };
+        
+        return updatePropsRecursive(prev);
+      });
     };
 
     const getSelectedComponentMetadata = (): ComponentMetadata | null => {
       if (!selectedComponentId) return null;
-      const component = canvasComponents.find(comp => comp.id === selectedComponentId);
+      
+      const findComponentRecursive = (components: CanvasComponent[]): CanvasComponent | null => {
+        for (const comp of components) {
+          if (comp.id === selectedComponentId) {
+            return comp;
+          }
+          if (comp.children && comp.children.length > 0) {
+            const found = findComponentRecursive(comp.children);
+            if (found) return found;
+          }
+        }
+        return null;
+      };
+      
+      const component = findComponentRecursive(canvasComponents);
       return component ? component.metadata : null;
     };
 
@@ -561,9 +650,16 @@ export const FullPage = forwardRef<HTMLDivElement, FullPageProps>(
               selectComponent={selectComponent}
               addComponentToContainer={addComponentToContainer}
               setCanvasComponents={setCanvasComponents}
-              isOverAnyContainer={isOverAnyContainer}
-              onContainerHover={(_containerId, isHovering) => {
-                setIsOverAnyContainer(isHovering);
+              hoveredContainerId={hoveredContainerId}
+              onContainerHover={(containerId, isHovering) => {
+                if (isHovering) {
+                  // Yeni bir container hover ediliyor
+                  setHoveredContainerId(containerId);
+                } else if (hoveredContainerId === containerId) {
+                  // Hover edilen container'dan çıkıldı
+                  setHoveredContainerId(null);
+                }
+                // Diğer container'lar hover ediliyorsa onları etkileme
               }}
             />
             

@@ -1,16 +1,7 @@
 import React, { useState, useRef, useEffect, CSSProperties } from 'react';
 import { useDrag } from 'react-dnd';
 import { DraggableIcon } from '../../icons/draggable';
-
-export interface ComponentMetadata {
-  name: string;
-  description: string;
-  category?: string;
-  props: Record<string, string>;
-  initialValues: Record<string, any>;
-  type: string;
-  p?: React.ComponentType<any>;
-}
+import { ComponentMetadata } from '../FullPage';
 
 // Draggable Component Item
 const DraggableSidebarComponent: React.FC<{ comp: ComponentMetadata }> = ({ comp }) => {
