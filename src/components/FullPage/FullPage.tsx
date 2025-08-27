@@ -5,6 +5,8 @@ import { FiEdit3, FiTrash2 } from 'react-icons/fi';
 import { Sidebar } from '../Sidebar';
 import { CanvasActions } from '../CanvasActions';
 import { PropsMenu } from '../PropsMenu';
+import { ZoomControl } from '../ZoomControl';
+import { ZOOM_CONSTANTS } from '../../constants/zoom';
 
 // ComponentMetadata interface'ini burada tanımlayalım
 export interface ComponentMetadata {
@@ -47,7 +49,8 @@ const DraggableComponent: React.FC<{
   selectedComponentId?: string | null;
   onContainerHover?: (containerId: string, isHovering: boolean) => void;
   hoveredComponentId?: string | null;
-}> = ({ component, index, moveComponent, deleteComponent, isSelected, selectComponent, addComponentToContainer, setCanvasComponents, selectedComponentId, onContainerHover, hoveredComponentId }) => {
+  zIndex?: number;
+}> = ({ component, index, moveComponent, deleteComponent, isSelected, selectComponent, addComponentToContainer, setCanvasComponents, selectedComponentId, onContainerHover, hoveredComponentId, zIndex = 1 }) => {
   const [{ isDragging }, drag] = useDrag({
     type: 'COMPONENT',
     item: { index },
@@ -133,17 +136,18 @@ const DraggableComponent: React.FC<{
             ...component.props.style,
             position: 'relative',
             minHeight: '60px',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
+            display: component.props.display || 'flex',
+            width: component.props.width || '100%',
+            height: component.props.height || 'auto',
+            maxWidth: component.props.maxWidth || 'none',
+            maxHeight: component.props.maxHeight || 'none',
             border: isSelected ? '1px dashed #007bff' : 
                    hoveredComponentId === component.id ? '1px solid #ff4444' : '1px dashed #ccc',
             borderRadius: '4px',
             padding: '16px',
             backgroundColor: 'transparent',
-            transition: 'all 0.2s ease',
             outlineOffset: '4px',
+            zIndex: zIndex,
           }}
           className={component.props.className}
           id={component.props.id}
@@ -164,10 +168,7 @@ const DraggableComponent: React.FC<{
           
           {/* Nested component'ler */}
           {component.children && component.children.length > 0 && (
-            <div style={{ 
-              width: '100%', 
-              zIndex: 11,
-            }}>
+            <>
               {component.children.map((child, childIndex) => (
                 <DraggableComponent
                   key={child.id}
@@ -225,9 +226,10 @@ const DraggableComponent: React.FC<{
                   selectedComponentId={selectedComponentId}
                   onContainerHover={onContainerHover}
                   hoveredComponentId={hoveredComponentId}
+                  zIndex={zIndex + 1}
                 />
               ))}
-            </div>
+            </>
           )}
           
           {/* Container drop zone - React DnD nested list example gibi */}
@@ -437,13 +439,13 @@ const DropZone: React.FC<{
     <div
       ref={drop}
       style={{
-        maxHeight: 'calc(100vh - 50px)',
-        minHeight: '200px',
+        height: 'calc(100vh - 132px)',
         border: isOverCurrent ? '2px dashed #007bff' : '2px dashed #ddd',
         borderRadius: '8px',
         //backgroundColor: isOverCurrent ? 'transparent' : 'transparent',
         padding: '20px',
         marginBottom: '16px',
+        marginTop: '16px',
         transition: 'all 0.2s ease',
         overflow: 'auto',
       }}
@@ -468,6 +470,7 @@ const DropZone: React.FC<{
               selectedComponentId={selectedComponentId}
               onContainerHover={onContainerHover}
               hoveredComponentId={hoveredComponentId}
+              zIndex={11}
             />
           ))}
         </div>
@@ -491,6 +494,10 @@ export const FullPage = forwardRef<HTMLDivElement, FullPageProps>(
             const [selectedComponentId, setSelectedComponentId] = useState<string | null>(null);
       const [hoveredContainerId, setHoveredContainerId] = useState<string | null>(null);
       const [hoveredComponentId, setHoveredComponentId] = useState<string | null>(null);
+      const [zoom, setZoom] = useState(() => {
+        const savedZoom = localStorage.getItem(ZOOM_CONSTANTS.ZOOM_STORAGE_KEY);
+        return savedZoom ? parseFloat(savedZoom) : ZOOM_CONSTANTS.DEFAULT_ZOOM;
+      });
 
     // Global click handler - component dışına tıklandığında seçimi kapat
     const handleCanvasClick = (e: React.MouseEvent) => {
@@ -587,10 +594,17 @@ export const FullPage = forwardRef<HTMLDivElement, FullPageProps>(
     };
 
     const handlePropsChange = (componentId: string, newProps: Record<string, any>) => {
+      console.log('Props change requested:', { componentId, newProps });
+      
       setCanvasComponents(prev => {
         const updatePropsRecursive = (components: CanvasComponent[]): CanvasComponent[] => {
           return components.map(comp => {
             if (comp.id === componentId) {
+              console.log('Updating component props:', { 
+                componentId: comp.id, 
+                oldProps: comp.props, 
+                newProps 
+              });
               return { ...comp, props: newProps };
             } else if (comp.children && comp.children.length > 0) {
               return { ...comp, children: updatePropsRecursive(comp.children) };
@@ -599,8 +613,32 @@ export const FullPage = forwardRef<HTMLDivElement, FullPageProps>(
           });
         };
         
-        return updatePropsRecursive(prev);
+        const updated = updatePropsRecursive(prev);
+        console.log('Canvas components updated:', updated);
+        return updated;
       });
+    };
+
+    // Zoom handlers
+    const handleZoomIn = () => {
+      setZoom(prev => {
+        const newZoom = Math.min(prev + ZOOM_CONSTANTS.ZOOM_STEP, ZOOM_CONSTANTS.MAX_ZOOM);
+        localStorage.setItem(ZOOM_CONSTANTS.ZOOM_STORAGE_KEY, newZoom.toString());
+        return newZoom;
+      });
+    };
+
+    const handleZoomOut = () => {
+      setZoom(prev => {
+        const newZoom = Math.max(prev - ZOOM_CONSTANTS.ZOOM_STEP, ZOOM_CONSTANTS.MIN_ZOOM);
+        localStorage.setItem(ZOOM_CONSTANTS.ZOOM_STORAGE_KEY, newZoom.toString());
+        return newZoom;
+      });
+    };
+
+    const handleZoomReset = () => {
+      setZoom(ZOOM_CONSTANTS.DEFAULT_ZOOM);
+      localStorage.setItem(ZOOM_CONSTANTS.ZOOM_STORAGE_KEY, ZOOM_CONSTANTS.DEFAULT_ZOOM.toString());
     };
 
     const getSelectedComponentMetadata = (): ComponentMetadata | null => {
@@ -639,6 +677,9 @@ export const FullPage = forwardRef<HTMLDivElement, FullPageProps>(
       padding: '0 24px',
       backgroundColor: '#ffffff',
       overflow: 'auto',
+      transform: `scale(${zoom})`,
+      transformOrigin: 'center center',
+      transition: 'transform 0.2s ease',
     };
 
     return (
@@ -679,7 +720,7 @@ export const FullPage = forwardRef<HTMLDivElement, FullPageProps>(
           <Sidebar
             width={320}
             height={400}
-            initialPosition={{ x: 50, y: 100 }}
+            initialPosition={{ x: 50, y: 300 }}
             backgroundColor="#ffffff"
             shadow={true}
             components={components}
@@ -781,6 +822,17 @@ export const FullPage = forwardRef<HTMLDivElement, FullPageProps>(
             }}
           />
         </div>
+
+        {/* Zoom Control */}
+        <ZoomControl
+          zoom={zoom}
+          onZoomIn={handleZoomIn}
+          onZoomOut={handleZoomOut}
+          onZoomReset={handleZoomReset}
+          minZoom={ZOOM_CONSTANTS.MIN_ZOOM}
+          maxZoom={ZOOM_CONSTANTS.MAX_ZOOM}
+          zoomStep={ZOOM_CONSTANTS.ZOOM_STEP}
+        />
       </DndProvider>
     );
   }

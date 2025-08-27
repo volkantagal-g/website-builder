@@ -292,6 +292,164 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
   const renderPropInput = (propName: string, propType: string, currentValue: any) => {
     const value = localProps[propName] ?? currentValue;
 
+    // Display için özel kontrol
+    if (propName === 'display') {
+      const displayOptions = [
+        'block', 'inline', 'inline-block', 'flex', 'inline-flex', 
+        'grid', 'inline-grid', 'none', 'contents', 'table', 'table-row', 
+        'table-cell', 'table-column', 'table-column-group', 'table-footer-group', 
+        'table-header-group', 'table-row-group', 'table-caption', 'ruby', 
+        'ruby-base', 'ruby-text', 'ruby-base-container', 'ruby-text-container'
+      ];
+      return (
+        <select
+          value={value || 'block'}
+          onChange={(e) => handlePropChange(propName, e.target.value)}
+          style={{
+            width: '100%',
+            padding: '8px 12px',
+            border: '1px solid #ddd',
+            borderRadius: '4px',
+            fontSize: '14px',
+          }}
+        >
+          {displayOptions.map((option, index) => (
+            <option key={index} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+      );
+    }
+
+    // Width için özel kontrol
+    if (propName === 'width') {
+      const widthOptions = [
+        'auto', 'fit-content', 'max-content', 'min-content', 'revert', 'unset',
+        '0', '1px', '2px', '5px', '10px', '20px', '50px', '100px', '200px', '500px',
+        '1%', '5%', '10%', '25%', '50%', '75%', '100%',
+        '1em', '2em', '3em', '5em', '10em',
+        '1rem', '2rem', '3rem', '5rem', '10rem',
+        '1vw', '2vw', '5vw', '10vw', '25vw', '50vw', '100vw',
+        '1ch', '2ch', '5ch', '10ch', '20ch', '50ch'
+      ];
+      return (
+        <select
+          value={value || '100%'}
+          onChange={(e) => handlePropChange(propName, e.target.value)}
+          style={{
+            width: '100%',
+            padding: '8px 12px',
+            border: '1px solid #ddd',
+            borderRadius: '4px',
+            fontSize: '14px',
+          }}
+        >
+          {widthOptions.map((option, index) => (
+            <option key={index} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+      );
+    }
+
+    // Height için özel kontrol
+    if (propName === 'height') {
+      const heightOptions = [
+        'auto', 'fit-content', 'max-content', 'min-content', 'revert', 'unset',
+        '0', '1px', '2px', '5px', '10px', '20px', '50px', '100px', '200px', '500px',
+        '1%', '5%', '10%', '25%', '50%', '75%', '100%',
+        '1em', '2em', '3em', '5em', '10em',
+        '1rem', '2rem', '3rem', '5rem', '10rem',
+        '1vh', '2vh', '5vh', '10vh', '25vh', '50vh', '100vh',
+        '1ch', '2ch', '5ch', '10ch', '20ch', '50ch'
+      ];
+      return (
+        <select
+          value={value || 'auto'}
+          onChange={(e) => handlePropChange(propName, e.target.value)}
+          style={{
+            width: '100%',
+            padding: '8px 12px',
+            border: '1px solid #ddd',
+            borderRadius: '4px',
+            fontSize: '14px',
+          }}
+        >
+          {heightOptions.map((option, index) => (
+            <option key={index} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+      );
+    }
+
+    // Max-width için özel kontrol
+    if (propName === 'maxWidth') {
+      const maxWidthOptions = [
+        'none', 'max-content', 'min-content', 'fit-content', 'revert', 'unset',
+        '0', '1px', '2px', '5px', '10px', '20px', '50px', '100px', '200px', '500px',
+        '1%', '5%', '10%', '25%', '50%', '75%', '100%',
+        '1em', '2em', '3em', '5em', '10em',
+        '1rem', '2rem', '3rem', '5rem', '10rem',
+        '1vw', '2vw', '5vw', '10vw', '25vw', '50vw', '100vw',
+        '1ch', '2ch', '5ch', '10ch', '20ch', '50ch'
+      ];
+      return (
+        <select
+          value={value || 'none'}
+          onChange={(e) => handlePropChange(propName, e.target.value)}
+          style={{
+            width: '100%',
+            padding: '8px 12px',
+            border: '1px solid #ddd',
+            borderRadius: '4px',
+            fontSize: '14px',
+          }}
+        >
+          {maxWidthOptions.map((option, index) => (
+            <option key={index} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+      );
+    }
+
+    // Max-height için özel kontrol
+    if (propName === 'maxHeight') {
+      const maxHeightOptions = [
+        'none', 'max-content', 'min-content', 'fit-content', 'revert', 'unset',
+        '0', '1px', '2px', '5px', '10px', '20px', '50px', '100px', '200px', '500px',
+        '1%', '5%', '10%', '25%', '50%', '75%', '100%',
+        '1em', '2em', '3em', '5em', '10em',
+        '1rem', '2rem', '3rem', '5rem', '10rem',
+        '1vh', '2vh', '5vh', '10vh', '25vh', '50vh', '100vh',
+        '1ch', '2ch', '5ch', '10ch', '20ch', '50ch'
+      ];
+      return (
+        <select
+          value={value || 'none'}
+          onChange={(e) => handlePropChange(propName, e.target.value)}
+          style={{
+            width: '100%',
+            padding: '8px 12px',
+            border: '1px solid #ddd',
+            borderRadius: '4px',
+            fontSize: '14px',
+          }}
+        >
+          {maxHeightOptions.map((option, index) => (
+            <option key={index} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+      );
+    }
+
     // Select type için özel kontrol
     if (propType.includes('|')) {
       const options = propType.split('|').map(opt => opt.trim());
@@ -307,8 +465,10 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
             fontSize: '14px',
           }}
         >
-          {options.map(option => (
-            <option key={option} value={option}>{option}</option>
+          {options.map((option, index) => (
+            <option key={index} value={option}>
+              {option}
+            </option>
           ))}
         </select>
       );
