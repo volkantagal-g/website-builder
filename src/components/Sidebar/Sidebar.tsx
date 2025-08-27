@@ -3,6 +3,7 @@ import { useDrag } from 'react-dnd';
 import { DraggableIcon } from '../../icons/draggable';
 import { ComponentMetadata } from '../FullPage';
 import { generalElementsMetadata } from '../../metadata';
+import { HtmlIcon } from '../../icons/html';
 
 // Draggable Component Item
 const DraggableSidebarComponent: React.FC<{ comp: ComponentMetadata }> = ({ comp }) => {
@@ -81,6 +82,7 @@ export interface SidebarProps {
    */
   components?: Array<{
     name: string;
+    logo?: React.ReactNode;
     components: ComponentMetadata[];
   }>;
   /**
@@ -115,13 +117,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [resizeOffset, setResizeOffset] = useState({ x: 0, y: 0 });
   const [currentWidth, setCurrentWidth] = useState(typeof width === 'number' ? width : 300);
   const [currentHeight, setCurrentHeight] = useState(typeof height === 'number' ? height : 400);
-  const [activeTab, setActiveTab] = useState<'pinnate' | 'general'>('pinnate');
+  const [activeTab, setActiveTab] = useState<'pinnate' | 'general'>('general');
   const sidebarRef = useRef<HTMLDivElement>(null);
 
   // Genel HTML component'leri - Metadata'dan geliyor
   const generalComponents = [
     {
       name: 'HTML Elements',
+      logo: <HtmlIcon />,
       components: generalElementsMetadata,
     },
   ];
@@ -206,6 +209,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
   }, [isDragging, isResizing, dragOffset, resizeOffset, position, onDrag]);
 
+  // Debug için components prop'unu logla
+  useEffect(() => {
+    console.log('Sidebar components prop:', components);
+    console.log('components[0]:', components[0]);
+    console.log('components[0]?.logo:', components[0]?.logo);
+    console.log('components[0]?.name:', components[0]?.name);
+  }, [components]);
+
   const sidebarStyle: CSSProperties = {
     position: 'fixed',
     left: position.x,
@@ -233,7 +244,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const contentStyle: CSSProperties = {
-    padding: '16px',
+    padding: '16px 16px 32px',
     height: `calc(100% - 70px)`,
     overflow: 'auto',
   };
@@ -256,16 +267,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
     return componentList.map((lib) => (
       <div key={lib.name} style={{ marginBottom: '24px' }}>
-        <h4 style={{ 
-          color: '#333', 
-          marginBottom: '16px', 
-          fontSize: '16px',
-          fontWeight: '600',
-          borderBottom: '2px solid #007bff',
-          paddingBottom: '8px'
-        }}>
-          {lib.name}
-        </h4>
         {Object.entries(
           lib.components.reduce((acc, comp) => {
             const category = comp.category || 'Uncategorized';
@@ -353,8 +354,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
         onMouseDown={handleHeaderMouseDown}
         className={isDragging ? 'dragging' : ''}
       >
-        <div style={{ fontSize: '15px', fontWeight: '600', color: '#333' }}>
-          Component Library
+        <div style={{ fontSize: '15px', fontWeight: '600', color: '#333', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          Components
         </div>
         <DraggableIcon />
       </div>
@@ -365,23 +366,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
         borderBottom: '1px solid #e9ecef',
         backgroundColor: '#f8f9fa',
       }}>
-        <button
-          onClick={() => setActiveTab('pinnate')}
-          style={{
-            flex: 1,
-            padding: '12px 16px',
-            border: 'none',
-            backgroundColor: activeTab === 'pinnate' ? '#ffffff' : 'transparent',
-            color: activeTab === 'pinnate' ? '#007bff' : '#666',
-            cursor: 'pointer',
-            fontSize: '14px',
-            fontWeight: activeTab === 'pinnate' ? '600' : '400',
-            borderBottom: activeTab === 'pinnate' ? '2px solid #007bff' : 'none',
-            transition: 'all 0.2s ease',
-          }}
-        >
-          Pinnate Components
-        </button>
         <button
           onClick={() => setActiveTab('general')}
           style={{
@@ -395,9 +379,36 @@ export const Sidebar: React.FC<SidebarProps> = ({
             fontWeight: activeTab === 'general' ? '600' : '400',
             borderBottom: activeTab === 'general' ? '2px solid #007bff' : 'none',
             transition: 'all 0.2s ease',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
           }}
         >
-          General Elements
+          {generalComponents[0]?.logo && generalComponents[0].logo}
+          {generalComponents[0]?.name || 'General Elements'}
+        </button>
+        <button
+          onClick={() => setActiveTab('pinnate')}
+          style={{
+            flex: 1,
+            padding: '12px 16px',
+            border: 'none',
+            backgroundColor: activeTab === 'pinnate' ? '#ffffff' : 'transparent',
+            color: activeTab === 'pinnate' ? '#007bff' : '#666',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: activeTab === 'pinnate' ? '600' : '400',
+            borderBottom: activeTab === 'pinnate' ? '2px solid #007bff' : 'none',
+            transition: 'all 0.2s ease',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+          }}
+        >
+          {components[0]?.logo && components[0].logo}
+          {components[0]?.name || 'Pinnate'}
         </button>
       </div>
 

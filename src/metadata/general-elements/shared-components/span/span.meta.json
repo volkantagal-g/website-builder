@@ -11,6 +11,7 @@
     "fontWeight": "string",
     "fontFamily": "string",
     "textAlign": "string",
+    "justifyContent": "string",
     "className": "string",
     "id": "string",
     "style": "CSSProperties"
@@ -22,6 +23,7 @@
     "fontWeight": "normal",
     "fontFamily": "inherit",
     "textAlign": "left",
+    "justifyContent": "flex-start",
     "className": "",
     "id": "",
     "style": {}

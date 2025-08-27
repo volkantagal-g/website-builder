@@ -31,6 +31,7 @@ export interface FullPageProps extends React.HTMLAttributes<HTMLDivElement> {
   backgroundColor?: string;
   components?: Array<{
     name: string;
+    logo?: React.ReactNode;
     components: ComponentMetadata[];
   }>;
   children?: React.ReactNode;
@@ -141,6 +142,7 @@ const DraggableComponent: React.FC<{
             height: component.props.height || 'auto',
             maxWidth: component.props.maxWidth || 'none',
             maxHeight: component.props.maxHeight || 'none',
+            justifyContent: component.props.justifyContent || 'flex-start',
             border: isSelected ? '1px dashed #007bff' : 
                    hoveredComponentId === component.id ? '1px solid #ff4444' : '1px dashed #ccc',
             borderRadius: '4px',
@@ -290,7 +292,7 @@ const DraggableComponent: React.FC<{
     <div
       ref={(node) => drag(drop(node))}
       style={{
-        width: '100%',
+        width: component.props.width.includes('px') ? (parseInt(component.props.width) + 12 + 'px') : '100%',
         opacity: isDragging ? 0.5 : 1,
         cursor: 'move',
         position: 'relative',

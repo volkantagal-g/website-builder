@@ -1,6 +1,7 @@
 import { createRoot } from 'react-dom/client';
 import { FullPage } from './components/FullPage';
 import { PinnateProvider, Components, p } from 'pinnate';
+import { PinnateIcon } from './icons/pinnate';
 import './styles/global.css';
 import 'pinnate/dist/index.css';
 
@@ -16,7 +17,7 @@ const App = () => {
   
   return (
     <PinnateProvider>
-      <FullPage components={[{name: 'Pinnate', components: componentsWithP}]}>
+      <FullPage components={[{name: 'Pinnate', logo: <PinnateIcon /> ,components: componentsWithP}]}>
       </FullPage>
     </PinnateProvider>
   );
