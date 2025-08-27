@@ -1,0 +1,38 @@
+{
+  "name": "Div",
+  "description": "Generic container div element",
+  "category": "Shared Components",
+  "type": "container",
+  "icon": "FiSquare",
+  "props": {
+    "display": "string",
+    "width": "string",
+    "height": "string",
+    "maxWidth": "string",
+    "maxHeight": "string",
+    "backgroundColor": "string",
+    "border": "string",
+    "borderRadius": "string",
+    "padding": "string",
+    "margin": "string",
+    "className": "string",
+    "id": "string",
+    "style": "CSSProperties"
+  },
+  "initialValues": {
+    "display": "flex",
+    "width": "100%",
+    "height": "auto",
+    "maxWidth": "none",
+    "maxHeight": "none",
+    "backgroundColor": "transparent",
+    "border": "1px dashed #ccc",
+    "borderRadius": "4px",
+    "padding": "16px",
+    "margin": "0",
+    "className": "",
+    "id": "",
+    "style": {}
+  },
+  "children": []
+}

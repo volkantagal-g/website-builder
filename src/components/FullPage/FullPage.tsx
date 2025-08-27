@@ -151,6 +151,7 @@ const DraggableComponent: React.FC<{
           }}
           className={component.props.className}
           id={component.props.id}
+          data-component
         >
           {/* Container içeriği - sadece children yoksa göster */}
           {(!component.children || component.children.length === 0) && (
@@ -246,7 +247,7 @@ const DraggableComponent: React.FC<{
               backgroundColor: isOverContainer ? 'rgba(0, 123, 255, 0.1)' : 'transparent',
               transition: 'all 0.2s ease',
               pointerEvents: 'auto',
-              zIndex: 10,
+              zIndex: 9,
             }}
             onClick={() => selectComponent(component.id)}
             className="container-drop-zone"
@@ -289,7 +290,7 @@ const DraggableComponent: React.FC<{
     <div
       ref={(node) => drag(drop(node))}
       style={{
-        width: component.metadata.type === 'container' ? '100%' : 'fit-content',
+        width: '100%',
         opacity: isDragging ? 0.5 : 1,
         cursor: 'move',
         position: 'relative',
@@ -299,6 +300,7 @@ const DraggableComponent: React.FC<{
         padding: '4px',
         transition: 'all 0.2s ease',
       }}
+      data-component
     >
       {/* Görünmez overlay div */}
       <div
@@ -316,16 +318,14 @@ const DraggableComponent: React.FC<{
         onClick={() => selectComponent(component.id)}
       />
       
-      {/* Seçim butonları */}
+      {/* Seçim butonları - Sağ alt tarafta */}
       {isSelected && (
         <div style={{
           position: 'absolute',
-          top: '50%',
-          right: '-40px',
-          transform: 'translateY(-50%)',
+          right: '8px',
+          bottom: '8px',
           display: 'flex',
-          flexDirection: 'column',
-          gap: '4px',
+          gap: '6px',
           zIndex: 1000,
         }}>
           <button
@@ -334,31 +334,32 @@ const DraggableComponent: React.FC<{
               console.log('Edit component:', component.id);
             }}
             style={{
-              background: 'none',
+              background: '#007bff',
               border: 'none',
-              padding: '4px',
+              padding: '6px',
               cursor: 'pointer',
-              fontSize: '16px',
-              color: '#666',
+              fontSize: '14px',
+              color: 'white',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              width: '24px',
-              height: '24px',
+              width: '28px',
+              height: '28px',
               borderRadius: '4px',
               transition: 'all 0.2s ease',
+              boxShadow: '0 2px 6px rgba(0, 0, 0, 0.2)',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#f0f0f0';
-              e.currentTarget.style.color = '#333';
+              e.currentTarget.style.backgroundColor = '#0056b3';
+              e.currentTarget.style.transform = 'scale(1.05)';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-              e.currentTarget.style.color = '#666';
+              e.currentTarget.style.backgroundColor = '#007bff';
+              e.currentTarget.style.transform = 'scale(1)';
             }}
             title="Edit component"
           >
-            <FiEdit3 />
+            <FiEdit3 size={14} />
           </button>
           <button
             onClick={(e) => {
@@ -366,31 +367,32 @@ const DraggableComponent: React.FC<{
               deleteComponent(component.id);
             }}
             style={{
-              background: 'none',
+              background: '#dc3545',
               border: 'none',
-              padding: '4px',
+              padding: '6px',
               cursor: 'pointer',
-              fontSize: '16px',
-              color: '#666',
+              fontSize: '14px',
+              color: 'white',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              width: '24px',
-              height: '24px',
+              width: '28px',
+              height: '28px',
               borderRadius: '4px',
               transition: 'all 0.2s ease',
+              boxShadow: '0 2px 6px rgba(0, 0, 0, 0.2)',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#f0f0f0';
-              e.currentTarget.style.color = '#dc3545';
+              e.currentTarget.style.backgroundColor = '#c82333';
+              e.currentTarget.style.transform = 'scale(1.05)';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-              e.currentTarget.style.color = '#666';
+              e.currentTarget.style.backgroundColor = '#dc3545';
+              e.currentTarget.style.transform = 'scale(1)';
             }}
             title="Delete component"
           >
-            <FiTrash2 />
+            <FiTrash2 size={14} />
           </button>
         </div>
       )}
@@ -505,6 +507,11 @@ export const FullPage = forwardRef<HTMLDivElement, FullPageProps>(
       const target = e.target as HTMLElement;
       if (target.closest('[data-props-menu]')) {
         return;
+      }
+      
+      // Component'e tıklanmadıysa ve canvas'a tıklandıysa selected component'ı temizle
+      if (target.closest('[data-canvas]') && !target.closest('[data-component]')) {
+        setSelectedComponentId(null);
       }
     };
 
@@ -690,7 +697,7 @@ export const FullPage = forwardRef<HTMLDivElement, FullPageProps>(
           onReset={() => console.log('Reset requested')}
         />
         <div ref={ref} style={containerStyle} {...props} onClick={handleCanvasClick}>
-          <div style={canvasStyle}>
+          <div style={canvasStyle} data-canvas>
             <DropZone
               onDrop={addComponent}
               components={canvasComponents}

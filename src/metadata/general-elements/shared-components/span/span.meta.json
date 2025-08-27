@@ -1,0 +1,30 @@
+{
+  "name": "Span",
+  "description": "Generic inline span element",
+  "category": "Shared Components",
+  "type": "element",
+  "icon": "FiType",
+  "props": {
+    "text": "string",
+    "color": "string",
+    "fontSize": "string",
+    "fontWeight": "string",
+    "fontFamily": "string",
+    "textAlign": "string",
+    "className": "string",
+    "id": "string",
+    "style": "CSSProperties"
+  },
+  "initialValues": {
+    "text": "Sample text",
+    "color": "#333333",
+    "fontSize": "16px",
+    "fontWeight": "normal",
+    "fontFamily": "inherit",
+    "textAlign": "left",
+    "className": "",
+    "id": "",
+    "style": {}
+  },
+  "children": []
+}

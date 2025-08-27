@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, CSSProperties } from 'react';
 import { useDrag } from 'react-dnd';
 import { DraggableIcon } from '../../icons/draggable';
 import { ComponentMetadata } from '../FullPage';
+import { generalElementsMetadata } from '../../metadata';
 
 // Draggable Component Item
 const DraggableSidebarComponent: React.FC<{ comp: ComponentMetadata }> = ({ comp }) => {
@@ -117,136 +118,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [activeTab, setActiveTab] = useState<'pinnate' | 'general'>('pinnate');
   const sidebarRef = useRef<HTMLDivElement>(null);
 
-  // Genel HTML component'leri
+  // Genel HTML component'leri - Metadata'dan geliyor
   const generalComponents = [
     {
       name: 'HTML Elements',
-      components: [
-        {
-          name: 'Div',
-          description: 'Generic container element',
-          category: 'Layout',
-          props: {
-            className: 'string',
-            style: 'CSSProperties',
-            children: 'ReactNode',
-            id: 'string',
-            isContainer: 'boolean',
-            display: 'string',
-            width: 'string',
-            height: 'string',
-            maxWidth: 'string',
-            maxHeight: 'string',
-          },
-          initialValues: {
-            className: '',
-            style: { 
-              padding: '16px', 
-              border: '1px dashed #ccc', 
-              borderRadius: '4px', 
-              minHeight: '60px',
-              width: '100%'
-            },
-            children: 'Drop components here',
-            id: '',
-            isContainer: true,
-            display: 'block',
-            width: '100%',
-            height: 'auto',
-            maxWidth: 'none',
-            maxHeight: 'none',
-          },
-          type: 'container',
-        },
-        {
-          name: 'Span',
-          description: 'Inline text container',
-          category: 'Text',
-          props: {
-            className: 'string',
-            style: 'CSSProperties',
-            children: 'ReactNode',
-          },
-          initialValues: {
-            className: '',
-            style: {},
-            children: 'Span Text',
-          },
-          type: 'component',
-        },
-        {
-          name: 'Label',
-          description: 'Form label element',
-          category: 'Form',
-          props: {
-            htmlFor: 'string',
-            className: 'string',
-            children: 'ReactNode',
-          },
-          initialValues: {
-            htmlFor: '',
-            className: '',
-            children: 'Label Text',
-          },
-          type: 'component',
-        },
-        {
-          name: 'Input',
-          description: 'Form input element',
-          category: 'Form',
-          props: {
-            type: 'text | email | password | number',
-            placeholder: 'string',
-            value: 'string',
-            className: 'string',
-          },
-          initialValues: {
-            type: 'text',
-            placeholder: 'Enter text...',
-            value: '',
-            className: '',
-          },
-          type: 'component',
-        },
-        {
-          name: 'Button',
-          description: 'Clickable button element',
-          category: 'Interactive',
-          props: {
-            type: 'button | submit | reset',
-            className: 'string',
-            children: 'ReactNode',
-            disabled: 'boolean',
-          },
-          initialValues: {
-            type: 'button',
-            className: '',
-            children: 'Click Me',
-            disabled: false,
-          },
-          type: 'component',
-        },
-        {
-          name: 'Image',
-          description: 'Image element',
-          category: 'Media',
-          props: {
-            src: 'string',
-            alt: 'string',
-            className: 'string',
-            width: 'number',
-            height: 'number',
-          },
-          initialValues: {
-            src: 'https://via.placeholder.com/300x200',
-            alt: 'Image description',
-            className: '',
-            width: 300,
-            height: 200,
-          },
-          type: 'component',
-        },
-      ] as ComponentMetadata[],
+      components: generalElementsMetadata,
     },
   ];
 

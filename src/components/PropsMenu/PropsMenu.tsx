@@ -37,7 +37,10 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
     height,
     activeTab,
     selectedComponent: !!selectedComponent,
+    selectedComponentName: selectedComponent?.name,
+    componentId,
     canvasData: canvasData?.length || 0,
+    localProps: Object.keys(localProps),
     draggedComponentId,
     dragOverId,
     dragPosition
@@ -46,14 +49,42 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
   // Component değiştiğinde local props'u güncelle
   React.useEffect(() => {
     if (selectedComponent) {
-      setLocalProps({ ...selectedComponent.initialValues });
+      // Canvas'tan gelen gerçek component props'larını kullan
+      // Eğer canvasData varsa, seçili component'i bul ve props'larını al
+      if (canvasData && componentId) {
+        const findComponentProps = (components: any[]): Record<string, any> | null => {
+          for (const comp of components) {
+            if (comp.id === componentId) {
+              return comp.props;
+            }
+            if (comp.children && comp.children.length > 0) {
+              const found = findComponentProps(comp.children);
+              if (found) return found;
+            }
+          }
+          return null;
+        };
+        
+        const canvasProps = findComponentProps(canvasData);
+        if (canvasProps) {
+          console.log('Loading props from canvas:', canvasProps);
+          setLocalProps(canvasProps);
+        } else {
+          console.log('Using initial values from metadata:', selectedComponent.initialValues);
+          setLocalProps({ ...selectedComponent.initialValues });
+        }
+      } else {
+        console.log('Using initial values from metadata:', selectedComponent.initialValues);
+        setLocalProps({ ...selectedComponent.initialValues });
+      }
+      
       // Component seçiliyse maximize et
       setIsMinimized(false);
       // Eski height'ı geri yükle
       setHeight(previousHeight);
     }
     // Component seçili değilse otomatik minimize etme
-  }, [selectedComponent, previousHeight]);
+  }, [selectedComponent, previousHeight, canvasData, componentId]);
 
   // Height değişikliklerini ayrı useEffect'te izle
   React.useEffect(() => {
@@ -291,6 +322,142 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
 
   const renderPropInput = (propName: string, propType: string, currentValue: any) => {
     const value = localProps[propName] ?? currentValue;
+
+    // Array tipindeki props için özel kontrol
+    if (propType.includes('[]') || Array.isArray(value)) {
+      const arrayValue = Array.isArray(value) ? value : [];
+      
+      return (
+        <div style={{ width: '100%' }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: '8px',
+          }}>
+            <label style={{
+              fontSize: '12px',
+              fontWeight: '600',
+              color: '#495057',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+            }}>
+              {propName}
+            </label>
+            <button
+              onClick={() => {
+                const newArray = [...arrayValue, { id: Date.now(), label: 'New Option', value: 'new-option' }];
+                handlePropChange(propName, newArray);
+              }}
+              style={{
+                padding: '4px 8px',
+                fontSize: '11px',
+                backgroundColor: '#007bff',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                transition: 'background-color 0.2s ease',
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#0056b3'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#007bff'}
+            >
+              + Add Item
+            </button>
+          </div>
+          
+          <div style={{
+            maxHeight: '120px',
+            overflow: 'auto',
+            border: '1px solid #ddd',
+            borderRadius: '4px',
+            padding: '8px',
+            backgroundColor: '#f8f9fa',
+          }}>
+            {arrayValue.length === 0 ? (
+              <div style={{
+                textAlign: 'center',
+                color: '#6c757d',
+                fontSize: '12px',
+                fontStyle: 'italic',
+                padding: '16px',
+              }}>
+                No items. Click "Add Item" to add options.
+              </div>
+            ) : (
+              arrayValue.map((item, index) => (
+                <div key={item.id || index} style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '8px',
+                  backgroundColor: 'white',
+                  border: '1px solid #e9ecef',
+                  borderRadius: '4px',
+                  marginBottom: '8px',
+                }}>
+                  <input
+                    type="text"
+                    value={item.label || ''}
+                    onChange={(e) => {
+                      const newArray = [...arrayValue];
+                      newArray[index] = { ...item, label: e.target.value };
+                      handlePropChange(propName, newArray);
+                    }}
+                    placeholder="Label"
+                    style={{
+                      flex: 1,
+                      padding: '6px 8px',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px',
+                      fontSize: '12px',
+                    }}
+                  />
+                  <input
+                    type="text"
+                    value={item.value || ''}
+                    onChange={(e) => {
+                      const newArray = [...arrayValue];
+                      newArray[index] = { ...item, value: e.target.value };
+                      handlePropChange(propName, newArray);
+                    }}
+                    placeholder="Value"
+                    style={{
+                      flex: 1,
+                      padding: '6px 8px',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px',
+                      fontSize: '12px',
+                    }}
+                  />
+                  <button
+                    onClick={() => {
+                      const newArray = arrayValue.filter((_, i) => i !== index);
+                      handlePropChange(propName, newArray);
+                    }}
+                    style={{
+                      padding: '4px 6px',
+                      fontSize: '10px',
+                      backgroundColor: '#dc3545',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      transition: 'background-color 0.2s ease',
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#c82333'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#dc3545'}
+                    title="Remove Item"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      );
+    }
 
     // Display için özel kontrol
     if (propName === 'display') {

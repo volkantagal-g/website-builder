@@ -1,0 +1,30 @@
+{
+  "name": "Label",
+  "description": "Generic label element",
+  "category": "Shared Components",
+  "type": "element",
+  "icon": "FiTag",
+  "props": {
+    "text": "string",
+    "htmlFor": "string",
+    "color": "string",
+    "fontSize": "string",
+    "fontWeight": "string",
+    "fontFamily": "string",
+    "className": "string",
+    "id": "string",
+    "style": "CSSProperties"
+  },
+  "initialValues": {
+    "text": "Label text",
+    "htmlFor": "",
+    "color": "#333333",
+    "fontSize": "14px",
+    "fontWeight": "500",
+    "fontFamily": "inherit",
+    "className": "",
+    "id": "",
+    "style": {}
+  },
+  "children": []
+}
