@@ -7,6 +7,7 @@ import { CanvasActions } from '../CanvasActions';
 import { PropsMenu } from '../PropsMenu';
 import { ZoomControl } from '../ZoomControl';
 import { ZOOM_CONSTANTS } from '../../constants/zoom';
+import { STORAGE_KEYS } from '../../constants/storage';
 import { DevicePreset } from '../DeviceSelector/DeviceSelector';
 
 // ComponentMetadata interface'ini burada tanımlayalım
@@ -22,6 +23,7 @@ export interface ComponentMetadata {
 
 export interface CanvasComponent {
   id: string;
+  library: string; // Component'in hangi library'den geldiği (pinnate, general)
   metadata: ComponentMetadata;
   props: Record<string, any>;
   children?: CanvasComponent[]; // Container component'ler için nested component'ler
@@ -209,8 +211,13 @@ const DraggableComponent: React.FC<{
                       const addToNestedContainer = (components: CanvasComponent[]): CanvasComponent[] => {
                         return components.map(comp => {
                           if (comp.id === containerId) {
+                            // Component'in hangi library'den geldiğini belirle
+                            const isGeneralElement = ['Div'].includes(metadata.name);
+                            const library = isGeneralElement ? 'general' : 'pinnate';
+                            
                             return { ...comp, children: [...(comp.children || []), {
                               id: `component-${Date.now()}-${Math.random()}`,
+                              library, // Library bilgisini ekle
                               metadata,
                               props: { ...metadata.initialValues },
                               children: [],
@@ -525,8 +532,13 @@ export const FullPage = forwardRef<HTMLDivElement, FullPageProps>(
     const addComponent = (metadata: ComponentMetadata, parentId?: string) => {
       console.log('addComponent called:', { componentName: metadata.name, parentId });
       
+      // Component'in hangi library'den geldiğini belirle
+      const isGeneralElement = ['Div'].includes(metadata.name);
+      const library = isGeneralElement ? 'general' : 'pinnate';
+      
       const newComponent: CanvasComponent = {
         id: `component-${Date.now()}-${Math.random()}`,
+        library, // Library bilgisini ekle
         metadata,
         props: { ...metadata.initialValues },
         children: [],
@@ -611,6 +623,114 @@ export const FullPage = forwardRef<HTMLDivElement, FullPageProps>(
     const selectComponent = (componentId: string) => {
       setSelectedComponentId(componentId);
     };
+
+    // Canvas components değiştiğinde localStorage'a kaydet
+    useEffect(() => {
+      if (canvasComponents.length > 0) {
+        console.log('💾 Saving canvas to localStorage:', canvasComponents.length, 'components');
+        
+        // metadata.p'yi kaldırarak kaydet (JSON'da saklanamaz)
+        const componentsForStorage = canvasComponents.map(comp => ({
+          ...comp,
+          metadata: {
+            ...comp.metadata,
+            p: undefined // Function'ı kaldır
+          }
+        }));
+        
+        localStorage.setItem(STORAGE_KEYS.CANVAS_COMPONENTS, JSON.stringify(componentsForStorage));
+        console.log('✅ Saved to localStorage');
+      } else {
+        localStorage.removeItem(STORAGE_KEYS.CANVAS_COMPONENTS);
+        console.log('🗑️ Removed from localStorage');
+      }
+    }, [canvasComponents]);
+
+    // Components prop'u yüklendiğinde localStorage'dan canvas'ı geri yükle
+    useEffect(() => {
+      if (components.length > 0) {
+        const savedComponents = localStorage.getItem(STORAGE_KEYS.CANVAS_COMPONENTS);
+        
+        if (savedComponents) {
+          try {
+            console.log('📂 Loading canvas from localStorage');
+            const parsedComponents = JSON.parse(savedComponents);
+            
+            // localStorage'dan yüklenen component'lere metadata.p'yi geri ekle
+            const restoredComponents = parsedComponents.map((comp: any) => {
+              console.log('Processing component:', comp.metadata.name);
+              
+              // Component'in kaynağını belirle
+              const isGeneralElement = ['Div'].includes(comp.metadata.name);
+              const library = isGeneralElement ? 'general' : 'pinnate';
+              console.log('Component source:', comp.metadata.name, 'is', isGeneralElement ? 'General Element' : 'Pinnate Component');
+              
+              if (isGeneralElement) {
+                // General Element (Div) için basit HTML component'i oluştur
+                console.log('🔧 Creating HTML component for:', comp.metadata.name);
+                return {
+                  ...comp,
+                  library, // Library bilgisini ekle
+                  metadata: {
+                    ...comp.metadata,
+                    p: ({ children, style, ...props }: any) => (
+                      <div style={style} {...props}>
+                        {children}
+                      </div>
+                    )
+                  }
+                };
+              } else {
+                // Pinnate Component için orijinal metadata'yı bul
+                const allComponents = components.flatMap(cat => cat.components);
+                const originalMetadata = allComponents.find(
+                  (meta: ComponentMetadata) => meta.name === comp.metadata.name
+                );
+                
+                if (originalMetadata) {
+                  console.log('✅ Re-injecting Pinnate p function for', comp.metadata.name, ':', typeof originalMetadata.p);
+                  return {
+                    ...comp,
+                    library, // Library bilgisini ekle
+                    metadata: {
+                      ...comp.metadata,
+                      p: originalMetadata.p // Pinnate function'ı geri ekle
+                    }
+                  };
+                }
+                
+                console.log('❌ No Pinnate metadata found for:', comp.metadata.name);
+                return comp;
+              }
+            });
+            
+            console.log('Final restored components:', restoredComponents);
+            setCanvasComponents(restoredComponents);
+          } catch (error) {
+            console.error('Error parsing localStorage components:', error);
+          }
+        } else {
+          console.log('No saved components found in localStorage');
+        }
+      }
+    }, [components]);
+
+    // Selected component değiştiğinde localStorage'a kaydet
+    useEffect(() => {
+      if (selectedComponentId) {
+        localStorage.setItem(STORAGE_KEYS.SELECTED_COMPONENT, selectedComponentId);
+      } else {
+        localStorage.removeItem(STORAGE_KEYS.SELECTED_COMPONENT);
+      }
+    }, [selectedComponentId]);
+
+    // Current device değiştiğinde localStorage'a kaydet
+    useEffect(() => {
+      localStorage.setItem(STORAGE_KEYS.CANVAS_DEVICE, JSON.stringify({
+        ...currentDevice,
+        icon: undefined // Icon'u JSON'da saklama
+      }));
+    }, [currentDevice]);
 
     const handlePropsChange = (componentId: string, newProps: Record<string, any>) => {
       console.log('Props change requested:', { componentId, newProps });

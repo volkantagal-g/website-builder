@@ -1,0 +1,6 @@
+export const STORAGE_KEYS = {
+  CANVAS_COMPONENTS: 'canvas-components',
+  CANVAS_DEVICE: 'canvas-device',
+  CANVAS_ZOOM: 'canvas-zoom',
+  SELECTED_COMPONENT: 'selected-component'
+} as const;

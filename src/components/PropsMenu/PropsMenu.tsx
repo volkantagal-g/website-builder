@@ -64,18 +64,20 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
       
       // Component seçiliyse maximize et
       setIsMinimized(false);
-      // Eski height'ı geri yükle
-      setHeight(previousHeight);
+      // Eski height'ı geri yükle - sadece component değiştiğinde
+      if (previousHeight !== INITIAL_PROPS_MENU_HEIGHT) {
+        setHeight(previousHeight);
+      }
     }
     // Component seçili değilse otomatik minimize etme
-  }, [selectedComponent, previousHeight, canvasData, componentId]);
+  }, [selectedComponent, canvasData, componentId]); // previousHeight dependency'si kaldırıldı
 
-  // Height değişikliklerini ayrı useEffect'te izle
+  // Height değişikliklerini ayrı useEffect'te izle - sadece resize sırasında
   React.useEffect(() => {
-    if (height > 0) {
+    if (height > 0 && isResizing) {
       setPreviousHeight(height);
     }
-  }, [height]);
+  }, [height, isResizing]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
