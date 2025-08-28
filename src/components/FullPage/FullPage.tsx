@@ -1,12 +1,13 @@
 import React, { forwardRef, CSSProperties, useState, useEffect } from 'react';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import { FiEdit3, FiTrash2 } from 'react-icons/fi';
+import { FiEdit3, FiMonitor, FiTrash2 } from 'react-icons/fi';
 import { Sidebar } from '../Sidebar';
 import { CanvasActions } from '../CanvasActions';
 import { PropsMenu } from '../PropsMenu';
 import { ZoomControl } from '../ZoomControl';
 import { ZOOM_CONSTANTS } from '../../constants/zoom';
+import { DevicePreset } from '../DeviceSelector/DeviceSelector';
 
 // ComponentMetadata interface'ini burada tanımlayalım
 export interface ComponentMetadata {
@@ -292,7 +293,7 @@ const DraggableComponent: React.FC<{
     <div
       ref={(node) => drag(drop(node))}
       style={{
-        width: component.props.width.includes('px') ? (parseInt(component.props.width) + 12 + 'px') : '100%',
+        width: component.props?.width && typeof component.props.width === 'string' && component.props.width.includes('px') ? (parseInt(component.props.width) + 12 + 'px') : '100%',
         opacity: isDragging ? 0.5 : 1,
         cursor: 'move',
         position: 'relative',
@@ -443,19 +444,15 @@ const DropZone: React.FC<{
     <div
       ref={drop}
       style={{
-        height: 'calc(100vh - 132px)',
+        height: '100%',
         border: isOverCurrent ? '2px dashed #007bff' : '2px dashed #ddd',
         borderRadius: '8px',
-        //backgroundColor: isOverCurrent ? 'transparent' : 'transparent',
-        padding: '20px',
-        marginBottom: '16px',
-        marginTop: '16px',
         transition: 'all 0.2s ease',
         overflow: 'auto',
       }}
     >
       {components.length === 0 ? (
-        <div style={{ color: '#999', fontSize: '14px', textAlign: 'center' }}>
+        <div style={{ color: '#999', fontSize: '14px', textAlign: 'center', paddingTop: '24px' }}>
           Sidebar'dan component sürükleyin
         </div>
       ) : (
@@ -495,13 +492,21 @@ export const FullPage = forwardRef<HTMLDivElement, FullPageProps>(
     ref
   ) => {
     const [canvasComponents, setCanvasComponents] = useState<CanvasComponent[]>([]);
-            const [selectedComponentId, setSelectedComponentId] = useState<string | null>(null);
-      const [hoveredContainerId, setHoveredContainerId] = useState<string | null>(null);
-      const [hoveredComponentId, setHoveredComponentId] = useState<string | null>(null);
-      const [zoom, setZoom] = useState(() => {
-        const savedZoom = localStorage.getItem(ZOOM_CONSTANTS.ZOOM_STORAGE_KEY);
-        return savedZoom ? parseFloat(savedZoom) : ZOOM_CONSTANTS.DEFAULT_ZOOM;
-      });
+    const [selectedComponentId, setSelectedComponentId] = useState<string | null>(null);
+    const [hoveredContainerId, setHoveredContainerId] = useState<string | null>(null);
+    const [hoveredComponentId, setHoveredComponentId] = useState<string | null>(null);
+    const [currentDevice, setCurrentDevice] = useState<DevicePreset>({
+      id: 'laptop',
+      name: 'Laptop',
+      width: 1366,
+      height: 768,
+      icon: <FiMonitor size={16} />,
+      category: 'desktop'
+    });
+    const [zoom, setZoom] = useState(() => {
+      const savedZoom = localStorage.getItem(ZOOM_CONSTANTS.ZOOM_STORAGE_KEY);
+      return savedZoom ? parseFloat(savedZoom) : ZOOM_CONSTANTS.DEFAULT_ZOOM;
+    });
 
     // Global click handler - component dışına tıklandığında seçimi kapat
     const handleCanvasClick = (e: React.MouseEvent) => {
@@ -598,6 +603,11 @@ export const FullPage = forwardRef<HTMLDivElement, FullPageProps>(
       setSelectedComponentId(null);
     };
 
+    const handleDeviceChange = (device: DevicePreset) => {
+      setCurrentDevice(device);
+      console.log('Device changed to:', device);
+    };
+
     const selectComponent = (componentId: string) => {
       setSelectedComponentId(componentId);
     };
@@ -673,22 +683,29 @@ export const FullPage = forwardRef<HTMLDivElement, FullPageProps>(
     const containerStyle: CSSProperties = {
       flexDirection: 'column',
       width: '100vw',
-      height: 'calc(100vh - 50px)',
-      backgroundColor,
+      height: 'auto',
+      backgroundColor: '#f0f0f0',
       boxSizing: 'border-box',
-      overflow: 'hidden',
+      overflow: 'auto',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '20px 20px 100px',
       ...style,
     };
 
     const canvasStyle: CSSProperties = {
-      width: '100%',
-      height: 'calc(100% - 50px)',
-      padding: '0 24px',
+      width: `${currentDevice.width}px`,
+      height: `${currentDevice.height}px`,
+      margin: '0 auto',
       backgroundColor: '#ffffff',
       overflow: 'auto',
       transform: `scale(${zoom})`,
-      transformOrigin: 'center center',
+      transformOrigin: 'center top',
       transition: 'transform 0.2s ease',
+      border: '1px solid #ddd',
+      borderRadius: '8px',
+      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
     };
 
     return (
@@ -697,6 +714,8 @@ export const FullPage = forwardRef<HTMLDivElement, FullPageProps>(
           canvasData={canvasComponents}
           onSave={(version) => console.log('Save requested for version:', version)}
           onReset={() => console.log('Reset requested')}
+          onDeviceChange={handleDeviceChange}
+          currentDevice={currentDevice}
         />
         <div ref={ref} style={containerStyle} {...props} onClick={handleCanvasClick}>
           <div style={canvasStyle} data-canvas>
@@ -729,7 +748,7 @@ export const FullPage = forwardRef<HTMLDivElement, FullPageProps>(
           <Sidebar
             width={320}
             height={400}
-            initialPosition={{ x: 50, y: 300 }}
+            initialPosition={{ x: 50, y: 150 }}
             backgroundColor="#ffffff"
             shadow={true}
             components={components}

@@ -1,19 +1,25 @@
 import React, { useState } from 'react';
 import { FiSave, FiRotateCcw } from 'react-icons/fi';
+import { DeviceSelector, DevicePreset } from '../DeviceSelector/DeviceSelector';
 
 export interface CanvasActionsProps {
   onSave?: (version: string) => void;
   onReset?: () => void;
+  onDeviceChange?: (device: DevicePreset) => void;
+  currentDevice?: DevicePreset;
   canvasData?: any; // Canvas'taki component'lerin data'sı
 }
 
 export const CanvasActions: React.FC<CanvasActionsProps> = ({ 
   onSave, 
   onReset,
+  onDeviceChange,
+  currentDevice,
   canvasData
 }) => {
   const [selectedVersion, setSelectedVersion] = useState('v1.0.0');
   const [versions] = useState(['v1.0.0', 'v1.1.0', 'v2.0.0']);
+  // currentDevice prop'u kullan, local state yok
 
   const handleSave = () => {
     console.log('Saving canvas with version:', selectedVersion);
@@ -40,6 +46,10 @@ export const CanvasActions: React.FC<CanvasActionsProps> = ({
     onReset?.();
   };
 
+  const handleDeviceChange = (device: DevicePreset) => {
+    onDeviceChange?.(device);
+  };
+
   return (
     <div style={{
       height: '50px',
@@ -50,11 +60,14 @@ export const CanvasActions: React.FC<CanvasActionsProps> = ({
       justifyContent: 'space-between',
       padding: '0 24px',
       boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+      position: 'sticky',
+      top: 0,
       zIndex: 1000,
     }}>
-      <div style={{ fontSize: '18px', fontWeight: '600', color: '#333' }}>
-        Website Builder
-      </div>
+      <DeviceSelector 
+        onDeviceChange={handleDeviceChange}
+        currentDevice={currentDevice}
+      />
       
       <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
         {/* Version Dropdown */}

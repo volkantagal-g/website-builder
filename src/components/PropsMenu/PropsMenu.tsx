@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { FiChevronUp, FiChevronDown, FiGrid, FiList, FiMove } from 'react-icons/fi';
 import { ComponentMetadata } from '../FullPage';
 import { PropInputFactory } from './PropInputFactory';
+import { INITIAL_PROPS_MENU_HEIGHT, MAX_PROPS_MENU_HEIGHT } from './constants';
 
 export interface PropsMenuProps {
   selectedComponent: ComponentMetadata | null;
@@ -24,28 +25,13 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
 }) => {
   const [isMinimized, setIsMinimized] = useState(true); // Başlangıçta minimize
   const [localProps, setLocalProps] = useState<Record<string, any>>({});
-  const [height, setHeight] = useState(300);
-  const [previousHeight, setPreviousHeight] = useState(300);
+  const [height, setHeight] = useState(INITIAL_PROPS_MENU_HEIGHT);
+  const [previousHeight, setPreviousHeight] = useState(INITIAL_PROPS_MENU_HEIGHT);
   const [isResizing, setIsResizing] = useState(false);
   const [activeTab, setActiveTab] = useState('properties'); // Yeni: active tab
   const [draggedComponentId, setDraggedComponentId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [dragPosition, setDragPosition] = useState<'before' | 'after' | 'inside' | null>(null);
-  
-  // Debug için console.log
-  console.log('PropsMenu render:', {
-    isMinimized,
-    height,
-    activeTab,
-    selectedComponent: !!selectedComponent,
-    selectedComponentName: selectedComponent?.name,
-    componentId,
-    canvasData: canvasData?.length || 0,
-    localProps: Object.keys(localProps),
-    draggedComponentId,
-    dragOverId,
-    dragPosition
-  });
 
   // Component değiştiğinde local props'u güncelle
   React.useEffect(() => {
@@ -68,14 +54,11 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
         
         const canvasProps = findComponentProps(canvasData);
         if (canvasProps) {
-          console.log('Loading props from canvas:', canvasProps);
           setLocalProps(canvasProps);
         } else {
-          console.log('Using initial values from metadata:', selectedComponent.initialValues);
           setLocalProps({ ...selectedComponent.initialValues });
         }
       } else {
-        console.log('Using initial values from metadata:', selectedComponent.initialValues);
         setLocalProps({ ...selectedComponent.initialValues });
       }
       
@@ -103,7 +86,7 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
     if (!isResizing) return;
     
     const newHeight = window.innerHeight - e.clientY;
-    const clampedHeight = Math.max(100, Math.min(300, newHeight));
+    const clampedHeight = Math.max(100, Math.min(MAX_PROPS_MENU_HEIGHT, newHeight));
     setHeight(clampedHeight);
   };
 
@@ -143,7 +126,6 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
   const handleDragStart = (e: React.DragEvent, componentId: string) => {
     e.dataTransfer.setData('text/plain', componentId);
     setDraggedComponentId(componentId);
-    console.log('Drag started:', componentId);
   };
 
   const handleDragOver = (e: React.DragEvent, targetId: string) => {
@@ -167,7 +149,6 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
     setDragOverId(targetId);
     setDragPosition(position);
     
-    console.log('Drag over:', { targetId, position });
   };
 
   const handleDragLeave = () => {
@@ -182,7 +163,6 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
     
     if (draggedId && targetId && draggedId !== targetId && onComponentMove) {
       const position = dragPosition || 'after';
-      console.log('Drop:', { draggedId, targetId, position });
       
       onComponentMove(draggedId, targetId, position);
     }
@@ -611,7 +591,7 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
               Component Tree - Drag to reorder or nest
             </div>
             <div style={{
-              maxHeight: '200px',
+              maxHeight: `${MAX_PROPS_MENU_HEIGHT}px`,
               overflow: 'auto',
               padding: '8px 0',
             }}>

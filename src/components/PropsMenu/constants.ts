@@ -1,0 +1,2 @@
+export const MAX_PROPS_MENU_HEIGHT = 600;
+export const INITIAL_PROPS_MENU_HEIGHT = 300;

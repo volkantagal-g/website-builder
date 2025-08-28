@@ -209,14 +209,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
   }, [isDragging, isResizing, dragOffset, resizeOffset, position, onDrag]);
 
-  // Debug için components prop'unu logla
-  useEffect(() => {
-    console.log('Sidebar components prop:', components);
-    console.log('components[0]:', components[0]);
-    console.log('components[0]?.logo:', components[0]?.logo);
-    console.log('components[0]?.name:', components[0]?.name);
-  }, [components]);
-
   const sidebarStyle: CSSProperties = {
     position: 'fixed',
     left: position.x,
