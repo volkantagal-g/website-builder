@@ -131,13 +131,11 @@ const DraggableComponent: React.FC<{
   }, [isOverContainer, component.id, component.metadata.type, onContainerHover]);
 
   const renderComponent = () => {
-    if (component.metadata.p) {
+    if (component.metadata.p && component.library !== 'general') {
       const ComponentToRender = component.metadata.p;
       
-      // Process component props with template binding
-      const processedProps = processComponentProps(component.props, { getResponseData });
-      
-      return <ComponentToRender {...processedProps} />;
+      return <ComponentToRender {...component.props} />;
+
     }
     
     // Container component'ler için özel render
@@ -145,28 +143,47 @@ const DraggableComponent: React.FC<{
       // Process container props with template binding
       const processedProps = processComponentProps(component.props, { getResponseData });
       
+      // CSS property'leri style objesinden çıkar, sadece style ve diğer valid prop'ları kullan
+      const { 
+        style, 
+        className, 
+        id, 
+        display, 
+        width, 
+        height, 
+        maxWidth, 
+        maxHeight, 
+        justifyContent, 
+        backgroundColor, 
+        border, 
+        borderRadius, 
+        padding, 
+        margin
+      } = processedProps;
+      
       return (
         <div 
           style={{
-            ...processedProps.style,
+            ...style,
             position: 'relative',
             minHeight: '60px',
-            display: processedProps.display || 'flex',
-            width: processedProps.width || '100%',
-            height: processedProps.height || 'auto',
-            maxWidth: processedProps.maxWidth || 'none',
-            maxHeight: processedProps.maxHeight || 'none',
-            justifyContent: processedProps.justifyContent || 'flex-start',
-            border: isSelected ? '1px dashed #6b3ff7' : 
-                   hoveredComponentId === component.id ? '1px solid #ff4444' : '1px dashed #ccc',
-            borderRadius: '4px',
-            padding: '16px',
-            backgroundColor: 'transparent',
+            display: display || 'flex',
+            width: width || '100%',
+            height: height || 'auto',
+            maxWidth: maxWidth || 'none',
+            maxHeight: maxHeight || 'none',
+            justifyContent: justifyContent || 'flex-start',
+            backgroundColor: backgroundColor || 'transparent',
+            border: border || (isSelected ? '1px dashed #6b3ff7' : 
+                   hoveredComponentId === component.id ? '1px solid #ff4444' : '1px dashed #ccc'),
+            borderRadius: borderRadius || '4px',
+            padding: padding || '16px',
+            margin: margin || '0',
             outlineOffset: '4px',
             zIndex: zIndex,
           }}
-          className={processedProps.className}
-          id={processedProps.id}
+          className={className}
+          id={id}
           data-component
         >
           {/* Container içeriği - sadece children yoksa göster */}
@@ -449,11 +466,6 @@ const DropZone: React.FC<{
       // Mouse herhangi bir container üzerinde hover varsa drop yapma
       const canDrop = !hoveredContainerId;
       
-      console.log('Ana DropZone canDrop check:', { 
-        hoveredContainerId, 
-        canDrop 
-      });
-      
       return canDrop;
     },
   });
@@ -547,10 +559,30 @@ export const FullPage = forwardRef<HTMLDivElement, FullPageProps>(
       const isGeneralElement = ['Div'].includes(metadata.name);
       const library = isGeneralElement ? 'general' : 'pinnate';
       
+      // Pinnate component'ler için p function'ı geri ekle
+      let finalMetadata = metadata;
+      if (library === 'pinnate' && !metadata.p) {
+        // Components array'inden orijinal metadata'yı bul
+        const allComponents = components.flatMap(cat => cat.components);
+        const originalMetadata = allComponents.find(
+          (meta: ComponentMetadata) => meta.name === metadata.name
+        );
+        
+        if (originalMetadata && originalMetadata.p) {
+          console.log('🔧 Re-injecting p function for new component:', metadata.name);
+          finalMetadata = {
+            ...metadata,
+            p: originalMetadata.p
+          };
+        } else {
+          console.log('❌ No p function found for:', metadata.name);
+        }
+      }
+      
       const newComponent: CanvasComponent = {
         id: `component-${Date.now()}-${Math.random()}`,
         library, // Library bilgisini ekle
-        metadata,
+        metadata: finalMetadata, // Güncellenmiş metadata'yı kullan
         props: { ...metadata.initialValues },
         children: [],
         parentId,
@@ -652,8 +684,8 @@ export const FullPage = forwardRef<HTMLDivElement, FullPageProps>(
         localStorage.setItem(STORAGE_KEYS.CANVAS_COMPONENTS, JSON.stringify(componentsForStorage));
         console.log('✅ Saved to localStorage');
       } else {
-        localStorage.removeItem(STORAGE_KEYS.CANVAS_COMPONENTS);
-        console.log('🗑️ Removed from localStorage');
+        //localStorage.removeItem(STORAGE_KEYS.CANVAS_COMPONENTS);
+        //console.log('🗑️ Removed from localStorage');
       }
     }, [canvasComponents]);
 

@@ -26,6 +26,7 @@ const config = {
     file: 'dist/index.js',
     format: 'es',
     sourcemap: true,
+    sourcemapExcludeSources: false,
   } : [
     {
       file: pkg.main,
@@ -52,6 +53,8 @@ const config = {
     typescript({
       typescript: typescriptModule,
       useTsconfigDeclarationDir: true,
+      sourceMap: true,
+      inlineSources: true,
     }),
     postcss({
       extract: isDev ? false : 'dist/styles.css',
