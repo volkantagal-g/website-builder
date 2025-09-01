@@ -201,7 +201,7 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
           {isDragOver && dragPosition === 'before' && (
             <div style={{
               height: '4px',
-              backgroundColor: '#007bff',
+              backgroundColor: '#6b3ff7',
               margin: '4px 0',
               borderRadius: '2px',
               opacity: 0.8,
@@ -227,8 +227,8 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
               fontSize: '13px',
               backgroundColor: isDragged ? '#e3f2fd' : 
                              isDragOver ? '#f0f8ff' : 'transparent',
-              border: isDragged ? '1px dashed #007bff' : 
-                     isDragOver ? '1px solid #007bff' : '1px solid transparent',
+              border: isDragged ? '1px dashed #6b3ff7' : 
+                     isDragOver ? '1px solid #6b3ff7' : '1px solid transparent',
               opacity: isDragged ? 0.5 : 1,
               // Hover border ekle - kırmızı border
               boxShadow: isDragOver ? '0 0 0 2px #ff4444' : 'none',
@@ -242,7 +242,7 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
             {isContainer && (
               <span style={{ 
                 marginLeft: '8px', 
-                color: '#007bff', 
+                color: '#6b3ff7', 
                 fontSize: '11px',
                 backgroundColor: '#e3f2fd',
                 padding: '2px 6px',
@@ -271,11 +271,11 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
               margin: '4px 0',
               padding: '8px',
               backgroundColor: '#e3f2fd',
-              border: '1px dashed #007bff',
+              border: '1px dashed #6b3ff7',
               borderRadius: '4px',
               textAlign: 'center',
               fontSize: '11px',
-              color: '#007bff',
+              color: '#6b3ff7',
             }}>
               Drop here to nest
             </div>
@@ -292,7 +292,7 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
           {isDragOver && dragPosition === 'after' && (
             <div style={{
               height: '4px',
-              backgroundColor: '#007bff',
+              backgroundColor: '#6b3ff7',
               margin: '4px 0',
               borderRadius: '2px',
               opacity: 0.8,
@@ -428,7 +428,7 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
             onClick={handleApplyChanges}
             style={{
               padding: '6px 12px',
-              backgroundColor: '#007bff',
+              backgroundColor: '#6b3ff7',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
@@ -479,8 +479,8 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
               padding: '0 16px',
               backgroundColor: activeTab === 'properties' ? '#ffffff' : 'transparent',
               border: 'none',
-              borderBottom: activeTab === 'properties' ? '2px solid #007bff' : '2px solid transparent',
-              color: activeTab === 'properties' ? '#007bff' : '#666',
+              borderBottom: activeTab === 'properties' ? '2px solid #6b3ff7' : '2px solid transparent',
+              color: activeTab === 'properties' ? '#6b3ff7' : '#666',
               fontSize: '13px',
               fontWeight: activeTab === 'properties' ? '600' : '400',
               cursor: 'pointer',
@@ -503,8 +503,8 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
               padding: '0 16px',
               backgroundColor: activeTab === 'tree' ? '#ffffff' : 'transparent',
               border: 'none',
-              borderBottom: activeTab === 'tree' ? '2px solid #007bff' : '2px solid transparent',
-              color: activeTab === 'tree' ? '#007bff' : '#666',
+              borderBottom: activeTab === 'tree' ? '2px solid #6b3ff7' : '2px solid transparent',
+              color: activeTab === 'tree' ? '#6b3ff7' : '#666',
               fontSize: '13px',
               fontWeight: activeTab === 'tree' ? '600' : '400',
               cursor: 'pointer',

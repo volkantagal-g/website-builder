@@ -146,7 +146,7 @@ const DraggableComponent: React.FC<{
             maxWidth: component.props.maxWidth || 'none',
             maxHeight: component.props.maxHeight || 'none',
             justifyContent: component.props.justifyContent || 'flex-start',
-            border: isSelected ? '1px dashed #007bff' : 
+            border: isSelected ? '1px dashed #6b3ff7' : 
                    hoveredComponentId === component.id ? '1px solid #ff4444' : '1px dashed #ccc',
             borderRadius: '4px',
             padding: '16px',
@@ -252,7 +252,7 @@ const DraggableComponent: React.FC<{
               left: 0,
               right: 0,
               bottom: 0,
-              border: isOverContainer ? '2px dashed #007bff' : '2px dashed transparent',
+              border: isOverContainer ? '2px dashed #6b3ff7' : '2px dashed transparent',
               borderRadius: '4px',
               backgroundColor: isOverContainer ? 'rgba(0, 123, 255, 0.1)' : 'transparent',
               transition: 'all 0.2s ease',
@@ -264,14 +264,14 @@ const DraggableComponent: React.FC<{
           >
             {isOverContainer && (
               <div style={{
-                color: '#007bff',
+                color: '#6b3ff7',
                 fontSize: '14px',
                 fontWeight: '600',
                 textAlign: 'center',
                 backgroundColor: 'rgba(255, 255, 255, 0.9)',
                 padding: '8px 16px',
                 borderRadius: '4px',
-                border: '1px solid #007bff',
+                border: '1px solid #6b3ff7',
               }}>
                 Drop component here
               </div>
@@ -305,7 +305,7 @@ const DraggableComponent: React.FC<{
         cursor: 'move',
         position: 'relative',
         display: 'block',
-        border: isSelected ? '2px solid #007bff' : '2px solid transparent',
+        border: isSelected ? '2px solid #6b3ff7' : '2px solid transparent',
         borderRadius: '6px',
         padding: '4px',
         transition: 'all 0.2s ease',
@@ -344,7 +344,7 @@ const DraggableComponent: React.FC<{
               console.log('Edit component:', component.id);
             }}
             style={{
-              background: '#007bff',
+              background: '#6b3ff7',
               border: 'none',
               padding: '6px',
               cursor: 'pointer',
@@ -364,7 +364,7 @@ const DraggableComponent: React.FC<{
               e.currentTarget.style.transform = 'scale(1.05)';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#007bff';
+              e.currentTarget.style.backgroundColor = '#6b3ff7';
               e.currentTarget.style.transform = 'scale(1)';
             }}
             title="Edit component"
@@ -452,7 +452,7 @@ const DropZone: React.FC<{
       ref={drop}
       style={{
         height: '100%',
-        border: isOverCurrent ? '2px dashed #007bff' : '2px dashed #ddd',
+        border: isOverCurrent ? '2px dashed #6b3ff7' : '2px dashed #ddd',
         borderRadius: '8px',
         transition: 'all 0.2s ease',
         overflow: 'auto',

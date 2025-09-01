@@ -99,7 +99,7 @@ export const CanvasActions: React.FC<CanvasActionsProps> = ({
             alignItems: 'center',
             gap: '6px',
             padding: '8px 16px',
-            backgroundColor: '#007bff',
+            backgroundColor: '#6b3ff7',
             color: 'white',
             border: 'none',
             borderRadius: '4px',
@@ -111,7 +111,7 @@ export const CanvasActions: React.FC<CanvasActionsProps> = ({
             e.currentTarget.style.backgroundColor = '#0056b3';
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = '#007bff';
+            e.currentTarget.style.backgroundColor = '#6b3ff7';
           }}
         >
           <FiSave size={16} />

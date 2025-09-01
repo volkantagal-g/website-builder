@@ -92,7 +92,7 @@ export const ToggleInput: React.FC<BaseInputProps> = ({
         position: 'relative',
         width: '44px',
         height: '24px',
-        backgroundColor: value ? '#007bff' : '#e9ecef',
+        backgroundColor: value ? '#6b3ff7' : '#e9ecef',
         borderRadius: '12px',
         cursor: 'pointer',
         transition: 'all 0.3s ease',

@@ -66,7 +66,7 @@ export const CSS_PROPERTY_OPTIONS = {
   
   border: [
     'none', 'solid', 'dashed', 'dotted', 'double', 'groove', 'ridge', 'inset', 'outset',
-    '1px solid #ccc', '2px solid #333', '1px dashed #999', '3px solid #007bff'
+    '1px solid #ccc', '2px solid #333', '1px dashed #999', '3px solid #6b3ff7'
   ],
   
   borderRadius: [
@@ -88,7 +88,7 @@ export const CSS_PROPERTY_OPTIONS = {
     'transparent', 'inherit', 'initial', 'unset',
     '#ffffff', '#f8f9fa', '#e9ecef', '#dee2e6', '#ced4da', '#adb5bd',
     '#6c757d', '#495057', '#343a40', '#212529', '#000000',
-    '#007bff', '#28a745', '#ffc107', '#dc3545', '#6f42c1', '#fd7e14',
+    '#6b3ff7', '#28a745', '#ffc107', '#dc3545', '#6f42c1', '#fd7e14',
     '#20c997', '#17a2b8', '#6c757d', '#e83e8c'
   ],
   
@@ -96,7 +96,7 @@ export const CSS_PROPERTY_OPTIONS = {
     'inherit', 'initial', 'unset',
     '#000000', '#212529', '#343a40', '#495057', '#6c757d', '#adb5bd',
     '#ced4da', '#dee2e6', '#e9ecef', '#f8f9fa', '#ffffff',
-    '#007bff', '#28a745', '#ffc107', '#dc3545', '#6f42c1', '#fd7e14'
+    '#6b3ff7', '#28a745', '#ffc107', '#dc3545', '#6f42c1', '#fd7e14'
   ],
   
   justifyContent: [

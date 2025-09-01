@@ -55,7 +55,7 @@ export const ArrayInput: React.FC<ArrayInputProps> = ({
           style={{
             padding: '4px 8px',
             fontSize: '11px',
-            backgroundColor: '#007bff',
+            backgroundColor: '#6b3ff7',
             color: 'white',
             border: 'none',
             borderRadius: '4px',
@@ -63,7 +63,7 @@ export const ArrayInput: React.FC<ArrayInputProps> = ({
             transition: 'background-color 0.2s ease',
           }}
           onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#0056b3'}
-          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#007bff'}
+          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#6b3ff7'}
         >
           + Add Item
         </button>
