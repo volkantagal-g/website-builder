@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { FiChevronUp, FiChevronDown, FiGrid, FiList, FiMove } from 'react-icons/fi';
+import { FiChevronUp, FiChevronDown, FiGrid, FiList, FiMove, FiGlobe } from 'react-icons/fi';
 import { ComponentMetadata } from '../FullPage';
 import { PropInputFactory } from './PropInputFactory';
 import { INITIAL_PROPS_MENU_HEIGHT, MAX_PROPS_MENU_HEIGHT } from './constants';
+
+import { ApiEndpointsPanel } from './ApiEndpointsPanel';
 
 export interface PropsMenuProps {
   selectedComponent: ComponentMetadata | null;
@@ -518,6 +520,30 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
             <FiList size={14} />
             Tree View
           </button>
+
+          {/* API Endpoints Tab */}
+          <button
+            onClick={() => setActiveTab('api')}
+            style={{
+              height: '100%',
+              padding: '0 16px',
+              backgroundColor: activeTab === 'api' ? '#ffffff' : 'transparent',
+              border: 'none',
+              borderBottom: activeTab === 'api' ? '2px solid #6b3ff7' : '2px solid transparent',
+              color: activeTab === 'api' ? '#6b3ff7' : '#666',
+              fontSize: '13px',
+              fontWeight: activeTab === 'api' ? '600' : '400',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              borderRadius: '0',
+            }}
+          >
+            <FiGlobe size={14} />
+            API Endpoints
+          </button>
         </div>
       </div>
 
@@ -601,6 +627,8 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
             </div>
           </div>
         )}
+
+        {activeTab === 'api' && <ApiEndpointsPanel />}
       </div>
     </div>
   );

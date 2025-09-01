@@ -9,6 +9,8 @@ import { ZoomControl } from '../ZoomControl';
 import { ZOOM_CONSTANTS } from '../../constants/zoom';
 import { STORAGE_KEYS } from '../../constants/storage';
 import { DevicePreset } from '../DeviceSelector/DeviceSelector';
+import { ApiProvider, useApi } from '../../context/ApiContext';
+import { processComponentProps } from '../../utils/templateBinding';
 
 // ComponentMetadata interface'ini burada tanımlayalım
 export interface ComponentMetadata {
@@ -55,6 +57,8 @@ const DraggableComponent: React.FC<{
   hoveredComponentId?: string | null;
   zIndex?: number;
 }> = ({ component, index, moveComponent, deleteComponent, isSelected, selectComponent, addComponentToContainer, setCanvasComponents, selectedComponentId, onContainerHover, hoveredComponentId, zIndex = 1 }) => {
+  const { getResponseData } = useApi();
+  
   const [{ isDragging }, drag] = useDrag({
     type: 'COMPONENT',
     item: { index },
@@ -129,23 +133,30 @@ const DraggableComponent: React.FC<{
   const renderComponent = () => {
     if (component.metadata.p) {
       const ComponentToRender = component.metadata.p;
-      return <ComponentToRender {...component.props} />;
+      
+      // Process component props with template binding
+      const processedProps = processComponentProps(component.props, { getResponseData });
+      
+      return <ComponentToRender {...processedProps} />;
     }
     
     // Container component'ler için özel render
     if (component.metadata.type === 'container') {
+      // Process container props with template binding
+      const processedProps = processComponentProps(component.props, { getResponseData });
+      
       return (
         <div 
           style={{
-            ...component.props.style,
+            ...processedProps.style,
             position: 'relative',
             minHeight: '60px',
-            display: component.props.display || 'flex',
-            width: component.props.width || '100%',
-            height: component.props.height || 'auto',
-            maxWidth: component.props.maxWidth || 'none',
-            maxHeight: component.props.maxHeight || 'none',
-            justifyContent: component.props.justifyContent || 'flex-start',
+            display: processedProps.display || 'flex',
+            width: processedProps.width || '100%',
+            height: processedProps.height || 'auto',
+            maxWidth: processedProps.maxWidth || 'none',
+            maxHeight: processedProps.maxHeight || 'none',
+            justifyContent: processedProps.justifyContent || 'flex-start',
             border: isSelected ? '1px dashed #6b3ff7' : 
                    hoveredComponentId === component.id ? '1px solid #ff4444' : '1px dashed #ccc',
             borderRadius: '4px',
@@ -154,8 +165,8 @@ const DraggableComponent: React.FC<{
             outlineOffset: '4px',
             zIndex: zIndex,
           }}
-          className={component.props.className}
-          id={component.props.id}
+          className={processedProps.className}
+          id={processedProps.id}
           data-component
         >
           {/* Container içeriği - sadece children yoksa göster */}
@@ -829,7 +840,8 @@ export const FullPage = forwardRef<HTMLDivElement, FullPageProps>(
     };
 
     return (
-      <DndProvider backend={HTML5Backend}>
+      <ApiProvider>
+        <DndProvider backend={HTML5Backend}>
         <CanvasActions 
           canvasData={canvasComponents}
           onSave={(version) => console.log('Save requested for version:', version)}
@@ -981,7 +993,8 @@ export const FullPage = forwardRef<HTMLDivElement, FullPageProps>(
           maxZoom={ZOOM_CONSTANTS.MAX_ZOOM}
           zoomStep={ZOOM_CONSTANTS.ZOOM_STEP}
         />
-      </DndProvider>
+        </DndProvider>
+      </ApiProvider>
     );
   }
 );
