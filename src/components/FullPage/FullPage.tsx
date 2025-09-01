@@ -135,7 +135,6 @@ const DraggableComponent: React.FC<{
       const ComponentToRender = component.metadata.p;
       
       return <ComponentToRender {...component.props} />;
-
     }
     
     // Container component'ler için özel render
@@ -316,13 +315,6 @@ const DraggableComponent: React.FC<{
       </div>
     );
   };
-
-  console.log('DraggableComponent render:', {
-    componentId: component.id,
-    componentType: component.metadata.type,
-    componentName: component.metadata.name,
-    hasAddFunction: !!addComponentToContainer
-  });
 
   return (
     <div
@@ -667,6 +659,71 @@ export const FullPage = forwardRef<HTMLDivElement, FullPageProps>(
       setSelectedComponentId(componentId);
     };
 
+    const restoreComponent = (comp: CanvasComponent) => {
+      // Component'in kaynağını belirle
+      const isGeneralElement = ['Div'].includes(comp.metadata.name);
+      const library = isGeneralElement ? 'general' : 'pinnate';
+      
+      if (isGeneralElement) {
+        return {
+          ...comp,
+          library,
+          metadata: {
+            ...comp.metadata,
+            p: ({ children, style, ...props }: any) => (
+              <div style={style} {...props}>
+                {children && children.length > 0 ? children.map((child: CanvasComponent) => restoreComponent(child)) : <></>}
+              </div>
+            )
+          }
+        };
+      } else {
+        // Pinnate Component için orijinal metadata'yı bul
+        const allComponents = components.flatMap(cat => cat.components);
+        const originalMetadata = allComponents.find(
+          (meta: ComponentMetadata) => meta.name === comp.metadata.name
+        );
+        
+        if (originalMetadata) {
+          console.log('✅ Re-injecting Pinnate p function for', comp.metadata.name, ':', typeof originalMetadata.p);
+          return {
+            ...comp,
+            library, // Library bilgisini ekle
+            metadata: {
+              ...comp.metadata,
+              p: originalMetadata.p // Pinnate function'ı geri ekle
+            }
+          };
+        }
+        
+        console.log('❌ No Pinnate metadata found for:', comp.metadata.name);
+        return comp;
+      }
+    };
+
+    // Recursive olarak tüm nested component'leri restore et
+    const restoreComponentRecursive = (comp: any): CanvasComponent => {
+      // Önce component'i restore et
+      const restoredComp = restoreComponent(comp);
+      
+      // Eğer children varsa, onları da recursive olarak restore et
+      if (restoredComp.children && restoredComp.children.length > 0) {
+        console.log('🔄 Restoring nested components for:', restoredComp.metadata.name, 'children count:', restoredComp.children.length);
+        
+        const restoredChildren = restoredComp.children.map((child: any) => {
+          console.log('  🔄 Restoring child:', child.metadata?.name || 'unknown');
+          return restoreComponentRecursive(child);
+        });
+        
+        return {
+          ...restoredComp,
+          children: restoredChildren
+        };
+      }
+      
+      return restoredComp;
+    };
+
     // Canvas components değiştiğinde localStorage'a kaydet
     useEffect(() => {
       if (canvasComponents.length > 0) {
@@ -699,53 +756,12 @@ export const FullPage = forwardRef<HTMLDivElement, FullPageProps>(
             console.log('📂 Loading canvas from localStorage');
             const parsedComponents = JSON.parse(savedComponents);
             
-            // localStorage'dan yüklenen component'lere metadata.p'yi geri ekle
-            const restoredComponents = parsedComponents.map((comp: any) => {
-              console.log('Processing component:', comp.metadata.name);
-              
-              // Component'in kaynağını belirle
-              const isGeneralElement = ['Div'].includes(comp.metadata.name);
-              const library = isGeneralElement ? 'general' : 'pinnate';
-              console.log('Component source:', comp.metadata.name, 'is', isGeneralElement ? 'General Element' : 'Pinnate Component');
-              
-              if (isGeneralElement) {
-                // General Element (Div) için basit HTML component'i oluştur
-                console.log('🔧 Creating HTML component for:', comp.metadata.name);
-                return {
-                  ...comp,
-                  library, // Library bilgisini ekle
-                  metadata: {
-                    ...comp.metadata,
-                    p: ({ children, style, ...props }: any) => (
-                      <div style={style} {...props}>
-                        {children}
-                      </div>
-                    )
-                  }
-                };
-              } else {
-                // Pinnate Component için orijinal metadata'yı bul
-                const allComponents = components.flatMap(cat => cat.components);
-                const originalMetadata = allComponents.find(
-                  (meta: ComponentMetadata) => meta.name === comp.metadata.name
-                );
-                
-                if (originalMetadata) {
-                  console.log('✅ Re-injecting Pinnate p function for', comp.metadata.name, ':', typeof originalMetadata.p);
-                  return {
-                    ...comp,
-                    library, // Library bilgisini ekle
-                    metadata: {
-                      ...comp.metadata,
-                      p: originalMetadata.p // Pinnate function'ı geri ekle
-                    }
-                  };
-                }
-                
-                console.log('❌ No Pinnate metadata found for:', comp.metadata.name);
-                return comp;
-              }
-            });
+                         // localStorage'dan yüklenen component'lere metadata.p'yi geri ekle
+             // Recursive olarak tüm nested component'leri restore et
+             const restoredComponents = parsedComponents.map((comp: any) => {
+               console.log('🔄 Starting recursive restore for:', comp.metadata?.name || 'unknown');
+               return restoreComponentRecursive(comp);
+             });
             
             console.log('Final restored components:', restoredComponents);
             setCanvasComponents(restoredComponents);
