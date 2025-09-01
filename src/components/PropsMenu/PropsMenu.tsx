@@ -305,7 +305,7 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
     });
   };
 
-  const renderPropInput = (propName: string, propType: string, currentValue: any) => {
+  const renderPropInput = (propName: string, propType: string | { type: string; options?: string[] }, currentValue: any) => {
     return PropInputFactory.createInput({
       propName,
       propType,

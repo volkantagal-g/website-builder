@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { ApiEndpoint, ApiResponse, ApiContextType } from '../types/api';
+import { STORAGE_KEYS } from '../constants/storage';
 
 const ApiContext = createContext<ApiContextType | undefined>(undefined);
 
@@ -12,8 +13,23 @@ export const useApi = () => {
 };
 
 export const ApiProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [endpoints, setEndpoints] = useState<ApiEndpoint[]>([]);
+  const [endpoints, setEndpoints] = useState<ApiEndpoint[]>(() => {
+    // Load endpoints from localStorage on initialization
+    try {
+      const savedEndpoints = localStorage.getItem(STORAGE_KEYS.API_ENDPOINTS);
+      if (savedEndpoints) {
+        const parsed = JSON.parse(savedEndpoints);
+        console.log('📂 Loading API endpoints from localStorage:', parsed.length, 'endpoints');
+        return parsed;
+      }
+    } catch (error) {
+      console.error('Error loading API endpoints from localStorage:', error);
+    }
+    return [];
+  });
+  
   const [responses, setResponses] = useState<Record<string, ApiResponse>>({});
+  // Note: API responses are not persisted - they should be fetched fresh each time
 
   const addEndpoint = useCallback((endpoint: Omit<ApiEndpoint, 'id'>) => {
     const newEndpoint: ApiEndpoint = {
@@ -108,6 +124,19 @@ export const ApiProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const response = responses[endpoint.id];
     return response?.data || null;
   }, [endpoints, responses]);
+
+  // Save endpoints to localStorage whenever they change
+  useEffect(() => {
+    if (endpoints.length > 0) {
+      console.log('💾 Saving API endpoints to localStorage:', endpoints.length, 'endpoints');
+      localStorage.setItem(STORAGE_KEYS.API_ENDPOINTS, JSON.stringify(endpoints));
+    } else {
+      localStorage.removeItem(STORAGE_KEYS.API_ENDPOINTS);
+    }
+  }, [endpoints]);
+
+  // Note: API responses are not saved to localStorage - they should be fetched fresh each time
+  // This ensures we always get the latest data from APIs
 
   const value: ApiContextType = {
     endpoints,

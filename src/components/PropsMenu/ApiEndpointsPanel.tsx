@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { FiPlus, FiPlay, FiTrash2, FiEdit3, FiCheck, FiX, FiRefreshCw, FiGlobe } from 'react-icons/fi';
 import { useApi } from '../../context/ApiContext';
 import { ApiEndpoint } from '../../types/api';
+import { ConfirmationPopup } from '../ConfirmationPopup/ConfirmationPopup';
 
 export const ApiEndpointsPanel: React.FC = () => {
   const { 
@@ -15,6 +16,11 @@ export const ApiEndpointsPanel: React.FC = () => {
   } = useApi();
 
   const [isAddingNew, setIsAddingNew] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; endpoint: ApiEndpoint | null }>({
+    isOpen: false,
+    endpoint: null
+  });
 
   const [newEndpoint, setNewEndpoint] = useState<Omit<ApiEndpoint, 'id'>>({
     name: '',
@@ -32,10 +38,20 @@ export const ApiEndpointsPanel: React.FC = () => {
       // Variable name'i camelCase yap ve boşlukları kaldır
       const cleanVariable = newEndpoint.variable.replace(/\s+/g, '').replace(/[^a-zA-Z0-9]/g, '');
       
-      addEndpoint({
-        ...newEndpoint,
-        variable: cleanVariable
-      });
+      if (editingId) {
+        // Update existing endpoint
+        updateEndpoint(editingId, {
+          ...newEndpoint,
+          variable: cleanVariable
+        });
+        setEditingId(null);
+      } else {
+        // Add new endpoint
+        addEndpoint({
+          ...newEndpoint,
+          variable: cleanVariable
+        });
+      }
       
       setNewEndpoint({
         name: '',
@@ -48,6 +64,50 @@ export const ApiEndpointsPanel: React.FC = () => {
       });
       setIsAddingNew(false);
     }
+  };
+
+  const handleEditEndpoint = (endpoint: ApiEndpoint) => {
+    setEditingId(endpoint.id);
+    setNewEndpoint(endpoint);
+    setIsAddingNew(true);
+  };
+
+  const handleDeleteEndpoint = (endpoint: ApiEndpoint) => {
+    setDeleteConfirm({
+      isOpen: true,
+      endpoint
+    });
+  };
+
+  const confirmDelete = () => {
+    if (deleteConfirm.endpoint) {
+      deleteEndpoint(deleteConfirm.endpoint.id);
+      setDeleteConfirm({
+        isOpen: false,
+        endpoint: null
+      });
+    }
+  };
+
+  const cancelDelete = () => {
+    setDeleteConfirm({
+      isOpen: false,
+      endpoint: null
+    });
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setIsAddingNew(false);
+    setNewEndpoint({
+      name: '',
+      variable: '',
+      url: '',
+      method: 'GET',
+      headers: {},
+      body: '',
+      isActive: true
+    });
   };
 
 
@@ -105,7 +165,20 @@ export const ApiEndpointsPanel: React.FC = () => {
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '4px'
+              gap: '4px',
+              transition: 'all 0.2s ease',
+              transform: 'translateY(0)',
+              boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = '#16a34a';
+              e.currentTarget.style.transform = 'translateY(-1px)';
+              e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.15)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = '#22c55e';
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.1)';
             }}
             title="Execute All Active Endpoints"
           >
@@ -124,7 +197,20 @@ export const ApiEndpointsPanel: React.FC = () => {
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '4px'
+              gap: '4px',
+              transition: 'all 0.2s ease',
+              transform: 'translateY(0)',
+              boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = '#5b21b6';
+              e.currentTarget.style.transform = 'translateY(-1px)';
+              e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.15)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = '#6b3ff7';
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.1)';
             }}
           >
             <FiPlus size={12} />
@@ -139,7 +225,7 @@ export const ApiEndpointsPanel: React.FC = () => {
         overflow: 'auto',
         padding: '12px'
       }}>
-        {/* Add New Endpoint Form */}
+        {/* Add/Edit Endpoint Form */}
         {isAddingNew && (
           <div style={{
             border: '1px solid #e5e7eb',
@@ -148,6 +234,14 @@ export const ApiEndpointsPanel: React.FC = () => {
             marginBottom: '16px',
             backgroundColor: '#f9fafb'
           }}>
+            <div style={{
+              fontSize: '16px',
+              fontWeight: '600',
+              color: '#111827',
+              marginBottom: '16px'
+            }}>
+              {editingId ? 'Edit Endpoint' : 'Add New Endpoint'}
+            </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div>
                 <label style={{ fontSize: '12px', fontWeight: '500', color: '#374151', display: 'block', marginBottom: '4px' }}>
@@ -259,7 +353,7 @@ export const ApiEndpointsPanel: React.FC = () => {
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
                 <button
-                  onClick={() => setIsAddingNew(false)}
+                  onClick={cancelEdit}
                   style={{
                     padding: '8px 16px',
                     border: '1px solid #d1d5db',
@@ -267,7 +361,24 @@ export const ApiEndpointsPanel: React.FC = () => {
                     backgroundColor: 'white',
                     color: '#374151',
                     cursor: 'pointer',
-                    fontSize: '14px'
+                    fontSize: '14px',
+                    transition: 'all 0.2s ease',
+                    transform: 'translateY(0)',
+                    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#f3f4f6';
+                    e.currentTarget.style.borderColor = '#9ca3af';
+                    e.currentTarget.style.color = '#111827';
+                    e.currentTarget.style.transform = 'translateY(-1px)';
+                    e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'white';
+                    e.currentTarget.style.borderColor = '#d1d5db';
+                    e.currentTarget.style.color = '#374151';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.05)';
                   }}
                 >
                   <FiX size={14} style={{ marginRight: '4px' }} />
@@ -283,11 +394,28 @@ export const ApiEndpointsPanel: React.FC = () => {
                     backgroundColor: newEndpoint.name && newEndpoint.variable && newEndpoint.url ? '#6b3ff7' : '#d1d5db',
                     color: 'white',
                     cursor: newEndpoint.name && newEndpoint.variable && newEndpoint.url ? 'pointer' : 'not-allowed',
-                    fontSize: '14px'
+                    fontSize: '14px',
+                    transition: 'all 0.2s ease',
+                    transform: 'translateY(0)',
+                    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (newEndpoint.name && newEndpoint.variable && newEndpoint.url) {
+                      e.currentTarget.style.backgroundColor = '#5b21b6';
+                      e.currentTarget.style.transform = 'translateY(-1px)';
+                      e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.15)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (newEndpoint.name && newEndpoint.variable && newEndpoint.url) {
+                      e.currentTarget.style.backgroundColor = '#6b3ff7';
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.1)';
+                    }
                   }}
                 >
                   <FiCheck size={14} style={{ marginRight: '4px' }} />
-                  Add Endpoint
+                  {editingId ? 'Update Endpoint' : 'Add Endpoint'}
                 </button>
               </div>
             </div>
@@ -355,35 +483,74 @@ export const ApiEndpointsPanel: React.FC = () => {
                     borderRadius: '4px',
                     backgroundColor: '#22c55e',
                     color: 'white',
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    transform: 'translateY(0)',
+                    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#16a34a';
+                    e.currentTarget.style.transform = 'translateY(-1px)';
+                    e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.15)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#22c55e';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.1)';
                   }}
                   title="Execute Endpoint"
                 >
                   <FiPlay size={12} />
                 </button>
                 <button
-                  onClick={() => console.log('Edit endpoint:', endpoint.id)}
+                  onClick={() => handleEditEndpoint(endpoint)}
                   style={{
                     padding: '6px',
                     border: 'none',
                     borderRadius: '4px',
                     backgroundColor: '#f59e0b',
                     color: 'white',
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    transform: 'translateY(0)',
+                    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#d97706';
+                    e.currentTarget.style.transform = 'translateY(-1px)';
+                    e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.15)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#f59e0b';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.1)';
                   }}
                   title="Edit Endpoint"
                 >
                   <FiEdit3 size={12} />
                 </button>
                 <button
-                  onClick={() => deleteEndpoint(endpoint.id)}
+                  onClick={() => handleDeleteEndpoint(endpoint)}
                   style={{
                     padding: '6px',
                     border: 'none',
                     borderRadius: '4px',
                     backgroundColor: '#ef4444',
                     color: 'white',
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    transform: 'translateY(0)',
+                    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#dc2626';
+                    e.currentTarget.style.transform = 'translateY(-1px)';
+                    e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.15)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#ef4444';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.1)';
                   }}
                   title="Delete Endpoint"
                 >
@@ -478,7 +645,20 @@ export const ApiEndpointsPanel: React.FC = () => {
                   textDecoration: 'underline',
                   border: 'none',
                   background: 'none',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  padding: '4px 8px',
+                  borderRadius: '4px'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = '#5b21b6';
+                  e.currentTarget.style.backgroundColor = '#f3f4f6';
+                  e.currentTarget.style.textDecoration = 'none';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = '#6b3ff7';
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.textDecoration = 'underline';
                 }}
               >
                 Add your first endpoint
@@ -487,6 +667,18 @@ export const ApiEndpointsPanel: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Confirmation Popup */}
+      <ConfirmationPopup
+        isOpen={deleteConfirm.isOpen}
+        title="Delete Endpoint"
+        message={`Are you sure you want to delete "${deleteConfirm.endpoint?.name}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+        onConfirm={confirmDelete}
+        onCancel={cancelDelete}
+      />
     </div>
   );
 };
