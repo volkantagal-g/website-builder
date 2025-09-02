@@ -1,7 +1,7 @@
 import React, { forwardRef, CSSProperties, useState, useEffect } from 'react';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import { FiEdit3, FiMonitor, FiTrash2 } from 'react-icons/fi';
+import { FiEdit3, FiMonitor, FiTrash2, FiCopy } from 'react-icons/fi';
 import { Sidebar } from '../Sidebar';
 import { CanvasActions } from '../CanvasActions';
 import { PropsMenu } from '../PropsMenu';
@@ -60,12 +60,17 @@ const DraggableComponent: React.FC<{
   hoveredComponentId?: string | null;
   zIndex?: number;
   canvasComponents: CanvasComponent[]; // Canvas components'ları prop olarak ekle
-}> = ({ component, index, moveComponent, deleteComponent, isSelected, selectComponent, addComponentToContainer, setCanvasComponents, selectedComponentId, onContainerHover, hoveredComponentId, zIndex = 1, canvasComponents }) => {
+  copyComponent: (id: string) => void; // Copy fonksiyonu
+}> = ({ component, index, moveComponent, deleteComponent, isSelected, selectComponent, addComponentToContainer, setCanvasComponents, selectedComponentId, onContainerHover, hoveredComponentId, zIndex = 1, canvasComponents, copyComponent }) => {
   const { getResponseData } = useApi();
   
   const [{ isDragging }, drag] = useDrag({
     type: 'COMPONENT',
-    item: { index },
+    item: { 
+      index, 
+      componentId: component.id,
+      parentId: component.parentId 
+    },
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),
     }),
@@ -73,12 +78,16 @@ const DraggableComponent: React.FC<{
 
   const [, drop] = useDrop({
     accept: 'COMPONENT',
-    hover: (item: { index: number }) => {
-      if (item.index === index) return;
+    hover: (item: { index: number; componentId: string; parentId?: string }) => {
+      if (item.index === index && item.parentId === component.parentId) return;
       // Container component'ler için pozisyon değişikliği yapma
       if (component.metadata.type === 'container') return;
-      moveComponent(item.index, index);
-      item.index = index;
+      
+      // Aynı parent içindeyse moveComponent kullan
+      if (item.parentId === component.parentId) {
+        moveComponent(item.index, index);
+        item.index = index;
+      }
     },
     canDrop: () => component.metadata.type !== 'container',
   });
@@ -100,21 +109,75 @@ const DraggableComponent: React.FC<{
           // Sidebar'dan gelen component
           console.log('Adding sidebar component to container');
           addComponentToContainer(component.id, item.component);
-        } else if (item.index !== undefined && setCanvasComponents) {
-          // Canvas'tan gelen component
-          console.log('Moving canvas component to container');
-          const draggedComponent = canvasComponents[item.index];
-          if (draggedComponent) {
-            // Component'i container'a taşı
-            setCanvasComponents(prev => {
-              const removeFromCanvas = (components: CanvasComponent[]): CanvasComponent[] => {
-                return components.filter((_, idx) => idx !== item.index);
-              };
-              
+        } else if (item.componentId && setCanvasComponents) {
+          // Canvas'tan gelen component (ID ile)
+          console.log('Moving canvas component to container by ID:', item.componentId);
+          
+          setCanvasComponents(prev => {
+            // Component'i bul ve kaldır
+            const findAndRemoveComponent = (components: CanvasComponent[]): { 
+              found: CanvasComponent | null, 
+              updated: CanvasComponent[] 
+            } => {
+              for (let i = 0; i < components.length; i++) {
+                if (components[i].id === item.componentId) {
+                  const found = components[i];
+                  const updated = components.filter((_, idx) => idx !== i);
+                  return { found, updated };
+                }
+                
+                if (components[i].children && components[i].children!.length > 0) {
+                  const result = findAndRemoveFromChildren(components[i].children!);
+                  if (result.found) {
+                    const updated = components.map(comp => 
+                      comp.id === components[i].id 
+                        ? { ...comp, children: result.updated }
+                        : comp
+                    );
+                    return { found: result.found, updated };
+                  }
+                }
+              }
+              return { found: null, updated: components };
+            };
+            
+            const findAndRemoveFromChildren = (children: CanvasComponent[]): { 
+              found: CanvasComponent | null, 
+              updated: CanvasComponent[] 
+            } => {
+              for (let i = 0; i < children.length; i++) {
+                if (children[i].id === item.componentId) {
+                  const found = children[i];
+                  const updated = children.filter((_, idx) => idx !== i);
+                  return { found, updated };
+                }
+                
+                if (children[i].children && children[i].children!.length > 0) {
+                  const result = findAndRemoveFromChildren(children[i].children!);
+                  if (result.found) {
+                    const updated = children.map(comp => 
+                      comp.id === children[i].id 
+                        ? { ...comp, children: result.updated }
+                        : comp
+                    );
+                    return { found: result.found, updated };
+                  }
+                }
+              }
+              return { found: null, updated: children };
+            };
+            
+            const { found, updated } = findAndRemoveComponent(prev);
+            
+            if (found) {
+              // Component'i yeni container'a ekle
               const addToContainer = (components: CanvasComponent[]): CanvasComponent[] => {
                 return components.map(comp => {
                   if (comp.id === component.id) {
-                    return { ...comp, children: [...(comp.children || []), draggedComponent] };
+                    return { 
+                      ...comp, 
+                      children: [...(comp.children || []), { ...found, parentId: component.id }] 
+                    };
                   } else if (comp.children && comp.children.length > 0) {
                     return { ...comp, children: addToContainer(comp.children) };
                   }
@@ -122,10 +185,11 @@ const DraggableComponent: React.FC<{
                 });
               };
               
-              const updated = removeFromCanvas(prev);
               return addToContainer(updated);
-            });
-          }
+            }
+            
+            return prev;
+          });
         }
       } else {
         console.log('Cannot add to container:', {
@@ -349,6 +413,7 @@ const DraggableComponent: React.FC<{
                   hoveredComponentId={hoveredComponentId}
                   zIndex={zIndex + 1}
                   canvasComponents={canvasComponents} // Canvas components'ları ekle
+                  copyComponent={copyComponent} // Copy fonksiyonu
                 />
               ))}
             </>
@@ -497,6 +562,39 @@ const DraggableComponent: React.FC<{
           <button
             onClick={(e) => {
               e.stopPropagation();
+              copyComponent(component.id);
+            }}
+            style={{
+              background: '#28a745',
+              border: 'none',
+              padding: '6px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              color: 'white',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '28px',
+              height: '28px',
+              borderRadius: '4px',
+              transition: 'all 0.2s ease',
+              boxShadow: '0 2px 6px rgba(0, 0, 0, 0.2)',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#218838';
+              e.currentTarget.style.transform = 'scale(1.05)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#28a745';
+              e.currentTarget.style.transform = 'scale(1)';
+            }}
+            title="Copy component"
+          >
+            <FiCopy size={14} />
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
               deleteComponent(component.id);
             }}
             style={{
@@ -548,7 +646,8 @@ const DropZone: React.FC<{
   hoveredContainerId: string | null;
   onContainerHover?: (containerId: string, isHovering: boolean) => void;
   hoveredComponentId: string | null;
-}> = ({ onDrop, components, moveComponent, deleteComponent, selectedComponentId, selectComponent, addComponentToContainer, setCanvasComponents, hoveredContainerId, onContainerHover, hoveredComponentId }) => {
+  copyComponent: (id: string) => void;
+}> = ({ onDrop, components, moveComponent, deleteComponent, selectedComponentId, selectComponent, addComponentToContainer, setCanvasComponents, hoveredContainerId, onContainerHover, hoveredComponentId, copyComponent }) => {
   const [{ isOver: isOverCurrent }, drop] = useDrop({
     accept: 'SIDEBAR_COMPONENT',
     drop: (item: { component: ComponentMetadata }) => {
@@ -598,6 +697,7 @@ const DropZone: React.FC<{
                 hoveredComponentId={hoveredComponentId}
                 zIndex={11}
                 canvasComponents={components} // Canvas components'ları ekle
+                copyComponent={copyComponent} // Copy fonksiyonu
               />
             ))}
         </div>
@@ -636,6 +736,7 @@ export const FullPage = forwardRef<HTMLDivElement, FullPageProps>(
       const savedZoom = localStorage.getItem(ZOOM_CONSTANTS.ZOOM_STORAGE_KEY);
       return savedZoom ? parseFloat(savedZoom) : ZOOM_CONSTANTS.DEFAULT_ZOOM;
     });
+    const [clipboard, setClipboard] = useState<CanvasComponent | null>(null);
 
     // Global click handler - component dışına tıklandığında seçimi kapat
     const handleCanvasClick = (e: React.MouseEvent) => {
@@ -722,6 +823,97 @@ export const FullPage = forwardRef<HTMLDivElement, FullPageProps>(
     const addComponentToContainer = (containerId: string, metadata: ComponentMetadata) => {
       console.log('addComponentToContainer called:', { containerId, componentName: metadata.name });
       addComponent(metadata, containerId);
+    };
+
+    // Copy fonksiyonu - component'i clipboard'a kopyala
+    const copyComponent = (componentId: string) => {
+      const findComponentRecursive = (components: CanvasComponent[]): CanvasComponent | null => {
+        for (const comp of components) {
+          if (comp.id === componentId) {
+            return comp;
+          }
+          if (comp.children && comp.children.length > 0) {
+            const found = findComponentRecursive(comp.children);
+            if (found) return found;
+          }
+        }
+        return null;
+      };
+      
+      const component = findComponentRecursive(canvasComponents);
+      if (component) {
+        setClipboard(component);
+        console.log('📋 Component copied:', component.metadata.name);
+      }
+    };
+
+    // Paste fonksiyonu - clipboard'dan component'i yapıştır
+    const pasteComponent = (targetComponentId?: string) => {
+      if (!clipboard) return;
+      
+      // Yeni ID'ler oluştur (recursive olarak)
+      const generateNewIds = (comp: CanvasComponent): CanvasComponent => {
+        return {
+          ...comp,
+          id: `component-${Date.now()}-${Math.random()}`,
+          children: comp.children ? comp.children.map(generateNewIds) : []
+        };
+      };
+      
+      const newComponent = generateNewIds(clipboard);
+      
+      if (targetComponentId) {
+        // Target component'in container olup olmadığını kontrol et
+        const findTargetComponent = (components: CanvasComponent[]): CanvasComponent | null => {
+          for (const comp of components) {
+            if (comp.id === targetComponentId) {
+              return comp;
+            }
+            if (comp.children && comp.children.length > 0) {
+              const found = findTargetComponent(comp.children);
+              if (found) return found;
+            }
+          }
+          return null;
+        };
+        
+        const targetComponent = findTargetComponent(canvasComponents);
+        
+        if (targetComponent && targetComponent.metadata.type === 'container') {
+          // Container component'in içine yapıştır
+          setCanvasComponents(prev => {
+            const addToContainerRecursive = (components: CanvasComponent[]): CanvasComponent[] => {
+              return components.map(comp => {
+                if (comp.id === targetComponentId) {
+                  return { ...comp, children: [...(comp.children || []), { ...newComponent, parentId: targetComponentId }] };
+                } else if (comp.children && comp.children.length > 0) {
+                  return { ...comp, children: addToContainerRecursive(comp.children) };
+                }
+                return comp;
+              });
+            };
+            
+            return addToContainerRecursive(prev);
+          });
+          
+          // Target component'i seç
+          setSelectedComponentId(targetComponentId);
+        } else {
+          // Target component container değilse ana canvas'a yapıştır
+          setCanvasComponents(prev => [...prev, newComponent]);
+          
+          // Yeni component'i seç
+          setSelectedComponentId(newComponent.id);
+        }
+      } else {
+        // Ana canvas'a yapıştır
+        setCanvasComponents(prev => [...prev, newComponent]);
+        
+        // Yeni component'i seç
+        setSelectedComponentId(newComponent.id);
+      }
+      
+      console.log('📋 Component pasted:', newComponent.metadata.name);
     };
 
     const moveComponent = (dragIndex: number, hoverIndex: number) => {
@@ -946,6 +1138,27 @@ export const FullPage = forwardRef<HTMLDivElement, FullPageProps>(
       }
     }, [components]);
 
+    // Keyboard shortcuts
+    useEffect(() => {
+      const handleKeyDown = (e: KeyboardEvent) => {
+        // Ctrl/Cmd + C (Copy)
+        if ((e.ctrlKey || e.metaKey) && e.key === 'c' && selectedComponentId) {
+          e.preventDefault();
+          copyComponent(selectedComponentId);
+        }
+        
+        // Ctrl/Cmd + V (Paste)
+        if ((e.ctrlKey || e.metaKey) && e.key === 'v' && clipboard) {
+          e.preventDefault();
+          // Seçili component'in içine paste yap
+          pasteComponent(selectedComponentId || undefined);
+        }
+      };
+
+      document.addEventListener('keydown', handleKeyDown);
+      return () => document.removeEventListener('keydown', handleKeyDown);
+    }, [selectedComponentId, clipboard]);
+
     // Selected component değiştiğinde localStorage'a kaydet
     useEffect(() => {
       if (selectedComponentId) {
@@ -1082,6 +1295,7 @@ export const FullPage = forwardRef<HTMLDivElement, FullPageProps>(
               setCanvasComponents={setCanvasComponents}
               hoveredContainerId={hoveredContainerId}
               hoveredComponentId={hoveredComponentId}
+              copyComponent={copyComponent}
               onContainerHover={(containerId, isHovering) => {
                 if (isHovering) {
                   // Yeni bir container hover ediliyor
