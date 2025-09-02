@@ -247,7 +247,7 @@ const DraggableComponent: React.FC<{
       // Style objesini güvenli hale getir
       const safeStyle: CSSProperties = {
         position: 'relative',
-        minHeight: '24px',
+        minHeight: '1px',
         display: display || 'flex',
         width: width || '100%',
         height: height || 'auto',
@@ -400,16 +400,35 @@ const DraggableComponent: React.FC<{
     );
   };
 
+  // Component props'larını işle (hem Pinnate hem General için)
+  const processedProps = processComponentProps(component.props, { getResponseData });
+  
+  // Style değerlerini al (önce style objesinden, sonra direkt props'lardan)
+  const getStyleValue = (key: string) => {
+    // Önce style objesinden kontrol et
+    if (processedProps.style && processedProps.style[key]) {
+      return processedProps.style[key];
+    }
+    // Sonra direkt props'lardan kontrol et
+    if (processedProps[key]) {
+      return processedProps[key];
+    }
+    return null;
+  };
+
+  const componentWidth = getStyleValue('width');
+  const componentDisplay = getStyleValue('display');
+
   return (
     <div
       ref={(node) => drag(drop(node))}
       style={{
-        width: component.props?.width && typeof component.props.width === 'string' && component.props.width.includes('px') ? (parseInt(component.props.width) + 12 + 'px') : 'auto',
+        width: componentWidth && typeof componentWidth === 'string' && componentWidth.includes('px') ? (parseInt(componentWidth) + 12 + 'px') : componentWidth || '100%',
         opacity: isDragging ? 0.5 : 1,
         cursor: 'move',
         position: 'relative',
-        display: 'block',
-        border: isSelected ? '2px solid #6b3ff7' : '2px solid transparent',
+        display: componentDisplay || 'block',
+        border: isSelected ? '2px solid #6b3ff7' : 'none',
         borderRadius: '6px',
         //padding: '4px',
         transition: 'all 0.2s ease',
@@ -753,16 +772,66 @@ export const FullPage = forwardRef<HTMLDivElement, FullPageProps>(
       const library = isGeneralElement ? 'general' : 'pinnate';
       
       if (isGeneralElement) {
+        // General element'ler için güncel metadata'yı bul
+        const allComponents = components.flatMap(cat => cat.components);
+        const currentMetadata = allComponents.find(
+          (meta: ComponentMetadata) => meta.name === comp.metadata.name
+        );
+        
+        // Eski metadata ile güncel metadata'yı merge et
+        const mergedMetadata = currentMetadata ? {
+          ...currentMetadata, // Güncel metadata (yeni props'lar dahil)
+          ...comp.metadata,   // Eski metadata (mevcut props değerleri korunur)
+          props: {
+            ...currentMetadata.props, // Güncel props tanımları
+            ...comp.metadata.props    // Eski props değerleri (varsa)
+          },
+          initialValues: {
+            ...currentMetadata.initialValues, // Güncel initial values
+            ...comp.metadata.initialValues    // Eski initial values (varsa)
+          }
+        } : comp.metadata;
+        
         return {
           ...comp,
           library,
           metadata: {
-            ...comp.metadata,
-            p: ({ children, style, ...props }: any) => (
-              <div style={style} {...props}>
-                {children && children.length > 0 ? children.map((child: CanvasComponent) => restoreComponent(child)) : <></>}
-              </div>
-            )
+            ...mergedMetadata,
+            p: ({ children, style, ...props }: any) => {
+              // CSS property'leri style objesinde birleştir
+              const combinedStyle: CSSProperties = {};
+              
+              // Sadece geçerli değerleri ekle
+              if (style && typeof style === 'object' && !Array.isArray(style)) {
+                Object.entries(style).forEach(([key, value]) => {
+                  if (value !== undefined && value !== null && value !== '' && 
+                      (typeof value === 'string' || typeof value === 'number')) {
+                    (combinedStyle as any)[key] = value;
+                  }
+                });
+              }
+              
+              // Diğer CSS property'leri ekle
+              if (props.display) (combinedStyle as any).display = props.display;
+              if (props.width) combinedStyle.width = props.width;
+              if (props.height) combinedStyle.height = props.height;
+              if (props.maxWidth) combinedStyle.maxWidth = props.maxWidth;
+              if (props.maxHeight) combinedStyle.maxHeight = props.maxHeight;
+              if (props.minWidth) combinedStyle.minWidth = props.minWidth;
+              if (props.minHeight) combinedStyle.minHeight = props.minHeight;
+              if (props.justifyContent) (combinedStyle as any).justifyContent = props.justifyContent;
+              if (props.backgroundColor) combinedStyle.backgroundColor = props.backgroundColor;
+              if (props.border) combinedStyle.border = props.border;
+              if (props.borderRadius) combinedStyle.borderRadius = props.borderRadius;
+              if (props.padding) combinedStyle.padding = props.padding;
+              if (props.margin) combinedStyle.margin = props.margin;
+              
+              return (
+                <div style={combinedStyle} {...props}>
+                  {children && children.length > 0 ? children.map((child: CanvasComponent) => restoreComponent(child)) : <></>}
+                </div>
+              );
+            }
           }
         };
       } else {
@@ -774,11 +843,26 @@ export const FullPage = forwardRef<HTMLDivElement, FullPageProps>(
         
         if (originalMetadata) {
           console.log('✅ Re-injecting Pinnate p function for', comp.metadata.name, ':', typeof originalMetadata.p);
+          
+          // Pinnate component'ler için de metadata'yı merge et
+          const mergedMetadata = {
+            ...originalMetadata, // Güncel metadata (yeni props'lar dahil)
+            ...comp.metadata,    // Eski metadata (mevcut props değerleri korunur)
+            props: {
+              ...originalMetadata.props, // Güncel props tanımları
+              ...comp.metadata.props     // Eski props değerleri (varsa)
+            },
+            initialValues: {
+              ...originalMetadata.initialValues, // Güncel initial values
+              ...comp.metadata.initialValues     // Eski initial values (varsa)
+            }
+          };
+          
           return {
             ...comp,
             library, // Library bilgisini ekle
             metadata: {
-              ...comp.metadata,
+              ...mergedMetadata,
               p: originalMetadata.p // Pinnate function'ı geri ekle
             }
           };

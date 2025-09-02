@@ -9,7 +9,7 @@ import { generateAllRadiusCSSVariables } from 'pinnate/tokens/radius';
 import { generateAllSpacingCSSVariables } from 'pinnate/tokens/spacing';
 
 const App = () => {
-  console.log(JSON.stringify(generateAllRadiusCSSVariables()));
+  console.log(Components);
   // Components'i p key'i ile map et
   const componentsWithP = Components.map(comp => ({
     ...comp,

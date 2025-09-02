@@ -5,36 +5,26 @@
   "type": "container",
   "icon": "FiSquare",
   "props": {
-    "display": "string",
-    "width": "string",
-    "height": "string",
-    "maxWidth": "string",
-    "maxHeight": "string",
-    "justifyContent": "string",
-    "backgroundColor": "string",
-    "border": "string",
-    "borderRadius": "string",
-    "padding": "string",
-    "margin": "string",
     "className": "string",
     "id": "string",
     "style": "CSSProperties"
   },
   "initialValues": {
-    "display": "flex",
-    "width": "100%",
-    "height": "auto",
-    "maxWidth": "none",
-    "maxHeight": "none",
-    "justifyContent": "flex-start",
-    "backgroundColor": "transparent",
-    "border": "none",
-    "borderRadius": "4px",
-    "padding": "16px",
-    "margin": "0",
     "className": "",
     "id": "",
-    "style": {}
+    "style": {
+      "display": "flex",
+      "width": "100%",
+      "height": "auto",
+      "maxWidth": "none",
+      "maxHeight": "none",
+      "justifyContent": "flex-start",
+      "backgroundColor": "transparent",
+      "border": "none",
+      "borderRadius": "4px",
+      "padding": "16px",
+      "margin": "0"
+    }
   },
   "children": []
 }

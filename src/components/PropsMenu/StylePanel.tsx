@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ComponentMetadata } from '../FullPage';
+import { VisualSpacingController } from './VisualSpacingController';
 
 interface StylePanelProps {
   palette: Record<string, string>;
@@ -13,7 +14,7 @@ interface StylePanelProps {
 
 export const StylePanel: React.FC<StylePanelProps> = ({ palette, radius, spacing, selectedComponent, componentId, canvasData, onPropsChange }) => {
   const [localStyle, setLocalStyle] = useState<Record<string, any>>({});
-  const [activeStyleTab, setActiveStyleTab] = useState<'colors' | 'typography' | 'spacing' | 'border'>('colors');
+  const [activeStyleTab, setActiveStyleTab] = useState<'layout' | 'colors' | 'typography' | 'spacing' | 'border'>('layout');
 
   // Component değiştiğinde local style'ı güncelle
   React.useEffect(() => {
@@ -170,6 +171,8 @@ export const StylePanel: React.FC<StylePanelProps> = ({ palette, radius, spacing
   };
 
   const spacingOptions = getSpacingOptions();
+
+
 
   // Border Style Select Component
   const BorderStyleSelect: React.FC<{
@@ -469,6 +472,7 @@ export const StylePanel: React.FC<StylePanelProps> = ({ palette, radius, spacing
         marginTop: '-8px'
       }}>
         {[
+          { key: 'layout', label: 'Layout' },
           { key: 'colors', label: 'Colors' },
           { key: 'typography', label: 'Typography' },
           { key: 'spacing', label: 'Spacing' },
@@ -495,6 +499,342 @@ export const StylePanel: React.FC<StylePanelProps> = ({ palette, radius, spacing
       </div>
 
       {/* Tab Content */}
+      {activeStyleTab === 'layout' && (
+        <div style={{ paddingTop: '8px' }}>
+          {/* Display */}
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{
+              display: 'block',
+              fontSize: '14px',
+              fontWeight: '500',
+              color: '#333',
+              marginBottom: '8px'
+            }}>
+              Display
+            </label>
+            <select
+              value={localStyle.display || ''}
+              onChange={(e) => handleStyleChange('display', e.target.value)}
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                fontSize: '14px',
+                backgroundColor: '#fff'
+              }}
+            >
+              <option value="">Select display</option>
+              <option value="block">Block</option>
+              <option value="inline">Inline</option>
+              <option value="inline-block">Inline Block</option>
+              <option value="flex">Flex</option>
+              <option value="inline-flex">Inline Flex</option>
+              <option value="grid">Grid</option>
+              <option value="inline-grid">Inline Grid</option>
+              <option value="none">None</option>
+            </select>
+          </div>
+
+          {/* Justify Content */}
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{
+              display: 'block',
+              fontSize: '14px',
+              fontWeight: '500',
+              color: '#333',
+              marginBottom: '8px'
+            }}>
+              Justify Content
+            </label>
+            <select
+              value={localStyle.justifyContent || ''}
+              onChange={(e) => handleStyleChange('justifyContent', e.target.value)}
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                fontSize: '14px',
+                backgroundColor: '#fff'
+              }}
+            >
+              <option value="">Select justify content</option>
+              <option value="flex-start">Flex Start</option>
+              <option value="flex-end">Flex End</option>
+              <option value="center">Center</option>
+              <option value="space-between">Space Between</option>
+              <option value="space-around">Space Around</option>
+              <option value="space-evenly">Space Evenly</option>
+            </select>
+          </div>
+
+          {/* Width */}
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{
+              display: 'block',
+              fontSize: '14px',
+              fontWeight: '500',
+              color: '#333',
+              marginBottom: '8px'
+            }}>
+              Width
+            </label>
+            <select
+              value={localStyle.width || ''}
+              onChange={(e) => handleStyleChange('width', e.target.value)}
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                fontSize: '14px',
+                backgroundColor: '#fff'
+              }}
+            >
+              <option value="">Select width</option>
+              <option value="auto">Auto</option>
+              <option value="fit-content">Fit Content</option>
+              <option value="max-content">Max Content</option>
+              <option value="min-content">Min Content</option>
+              <option value="100%">100%</option>
+              <option value="90%">90%</option>
+              <option value="80%">80%</option>
+              <option value="75%">75%</option>
+              <option value="66.666667%">66.67% (2/3)</option>
+              <option value="60%">60%</option>
+              <option value="50%">50%</option>
+              <option value="40%">40%</option>
+              <option value="33.333333%">33.33% (1/3)</option>
+              <option value="25%">25%</option>
+              <option value="20%">20%</option>
+              <option value="10%">10%</option>
+              <option value="100px">100px</option>
+              <option value="150px">150px</option>
+              <option value="200px">200px</option>
+              <option value="250px">250px</option>
+              <option value="300px">300px</option>
+              <option value="350px">350px</option>
+              <option value="400px">400px</option>
+              <option value="450px">450px</option>
+              <option value="500px">500px</option>
+              <option value="600px">600px</option>
+              <option value="700px">700px</option>
+              <option value="800px">800px</option>
+              <option value="900px">900px</option>
+              <option value="1000px">1000px</option>
+              <option value="1200px">1200px</option>
+              <option value="1400px">1400px</option>
+              <option value="1600px">1600px</option>
+              <option value="1800px">1800px</option>
+              <option value="2000px">2000px</option>
+              <option value="inherit">Inherit</option>
+              <option value="initial">Initial</option>
+              <option value="unset">Unset</option>
+            </select>
+          </div>
+
+          {/* Height */}
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{
+              display: 'block',
+              fontSize: '14px',
+              fontWeight: '500',
+              color: '#333',
+              marginBottom: '8px'
+            }}>
+              Height
+            </label>
+            <select
+              value={localStyle.height || ''}
+              onChange={(e) => handleStyleChange('height', e.target.value)}
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                fontSize: '14px',
+                backgroundColor: '#fff'
+              }}
+            >
+              <option value="">Select height</option>
+              <option value="auto">Auto</option>
+              <option value="fit-content">Fit Content</option>
+              <option value="max-content">Max Content</option>
+              <option value="min-content">Min Content</option>
+              <option value="100vh">100vh (Full Viewport)</option>
+              <option value="90vh">90vh</option>
+              <option value="80vh">80vh</option>
+              <option value="75vh">75vh</option>
+              <option value="66.666667vh">66.67vh (2/3)</option>
+              <option value="60vh">60vh</option>
+              <option value="50vh">50vh (Half Viewport)</option>
+              <option value="40vh">40vh</option>
+              <option value="33.333333vh">33.33vh (1/3)</option>
+              <option value="25vh">25vh</option>
+              <option value="20vh">20vh</option>
+              <option value="10vh">10vh</option>
+              <option value="100%">100%</option>
+              <option value="90%">90%</option>
+              <option value="80%">80%</option>
+              <option value="75%">75%</option>
+              <option value="66.666667%">66.67% (2/3)</option>
+              <option value="60%">60%</option>
+              <option value="50%">50%</option>
+              <option value="40%">40%</option>
+              <option value="33.333333%">33.33% (1/3)</option>
+              <option value="25%">25%</option>
+              <option value="20%">20%</option>
+              <option value="10%">10%</option>
+              <option value="50px">50px</option>
+              <option value="75px">75px</option>
+              <option value="100px">100px</option>
+              <option value="125px">125px</option>
+              <option value="150px">150px</option>
+              <option value="175px">175px</option>
+              <option value="200px">200px</option>
+              <option value="250px">250px</option>
+              <option value="300px">300px</option>
+              <option value="350px">350px</option>
+              <option value="400px">400px</option>
+              <option value="450px">450px</option>
+              <option value="500px">500px</option>
+              <option value="600px">600px</option>
+              <option value="700px">700px</option>
+              <option value="800px">800px</option>
+              <option value="900px">900px</option>
+              <option value="1000px">1000px</option>
+              <option value="inherit">Inherit</option>
+              <option value="initial">Initial</option>
+              <option value="unset">Unset</option>
+            </select>
+          </div>
+
+          {/* Max Width */}
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{
+              display: 'block',
+              fontSize: '14px',
+              fontWeight: '500',
+              color: '#333',
+              marginBottom: '8px'
+            }}>
+              Max Width
+            </label>
+            <select
+              value={localStyle.maxWidth || ''}
+              onChange={(e) => handleStyleChange('maxWidth', e.target.value)}
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                fontSize: '14px',
+                backgroundColor: '#fff'
+              }}
+            >
+              <option value="">Select max width</option>
+              <option value="none">None</option>
+              <option value="fit-content">Fit Content</option>
+              <option value="max-content">Max Content</option>
+              <option value="min-content">Min Content</option>
+              <option value="100%">100%</option>
+              <option value="90%">90%</option>
+              <option value="80%">80%</option>
+              <option value="75%">75%</option>
+              <option value="66.666667%">66.67% (2/3)</option>
+              <option value="60%">60%</option>
+              <option value="50%">50%</option>
+              <option value="40%">40%</option>
+              <option value="33.333333%">33.33% (1/3)</option>
+              <option value="25%">25%</option>
+              <option value="20%">20%</option>
+              <option value="10%">10%</option>
+              <option value="100px">100px</option>
+              <option value="150px">150px</option>
+              <option value="200px">200px</option>
+              <option value="250px">250px</option>
+              <option value="300px">300px</option>
+              <option value="350px">350px</option>
+              <option value="400px">400px</option>
+              <option value="450px">450px</option>
+              <option value="500px">500px</option>
+              <option value="600px">600px</option>
+              <option value="700px">700px</option>
+              <option value="800px">800px</option>
+              <option value="900px">900px</option>
+              <option value="1000px">1000px</option>
+              <option value="1200px">1200px</option>
+              <option value="1400px">1400px</option>
+              <option value="1600px">1600px</option>
+              <option value="1800px">1800px</option>
+              <option value="2000px">2000px</option>
+              <option value="inherit">Inherit</option>
+              <option value="initial">Initial</option>
+              <option value="unset">Unset</option>
+            </select>
+          </div>
+
+          {/* Min Width */}
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{
+              display: 'block',
+              fontSize: '14px',
+              fontWeight: '500',
+              color: '#333',
+              marginBottom: '8px'
+            }}>
+              Min Width
+            </label>
+            <select
+              value={localStyle.minWidth || ''}
+              onChange={(e) => handleStyleChange('minWidth', e.target.value)}
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                fontSize: '14px',
+                backgroundColor: '#fff'
+              }}
+            >
+              <option value="">Select min width</option>
+              <option value="0">0</option>
+              <option value="auto">Auto</option>
+              <option value="fit-content">Fit Content</option>
+              <option value="max-content">Max Content</option>
+              <option value="min-content">Min Content</option>
+              <option value="10%">10%</option>
+              <option value="20%">20%</option>
+              <option value="25%">25%</option>
+              <option value="33.333333%">33.33% (1/3)</option>
+              <option value="40%">40%</option>
+              <option value="50px">50px</option>
+              <option value="75px">75px</option>
+              <option value="100px">100px</option>
+              <option value="125px">125px</option>
+              <option value="150px">150px</option>
+              <option value="175px">175px</option>
+              <option value="200px">200px</option>
+              <option value="250px">250px</option>
+              <option value="300px">300px</option>
+              <option value="350px">350px</option>
+              <option value="400px">400px</option>
+              <option value="450px">450px</option>
+              <option value="500px">500px</option>
+              <option value="600px">600px</option>
+              <option value="700px">700px</option>
+              <option value="800px">800px</option>
+              <option value="900px">900px</option>
+              <option value="1000px">1000px</option>
+              <option value="inherit">Inherit</option>
+              <option value="initial">Initial</option>
+              <option value="unset">Unset</option>
+            </select>
+          </div>
+        </div>
+      )}
+
       {activeStyleTab === 'colors' && (
         <div style={{ paddingTop: '8px' }}>
           {/* Color */}
@@ -635,49 +975,200 @@ export const StylePanel: React.FC<StylePanelProps> = ({ palette, radius, spacing
 
       {activeStyleTab === 'border' && (
         <div style={{ paddingTop: '8px' }}>
-          {/* Border Width */}
-          <div style={{ marginBottom: '16px' }}>
+          {/* Border Width - Visual Controller */}
+          <VisualSpacingController
+            label="Border Width"
+            currentValues={{
+              top: localStyle.borderTopWidth,
+              right: localStyle.borderRightWidth,
+              bottom: localStyle.borderBottomWidth,
+              left: localStyle.borderLeftWidth
+            }}
+            onChange={(side, value) => {
+              const property = `border${side.charAt(0).toUpperCase() + side.slice(1)}Width`;
+              handleStyleChange(property, value);
+            }}
+            spacingOptions={[
+              { label: 'No border', value: '0px', cssVar: '--no-border' },
+              { label: 'Thin', value: '1px', cssVar: '--border-thin' },
+              { label: 'Medium', value: '2px', cssVar: '--border-medium' },
+              { label: 'Thick', value: '3px', cssVar: '--border-thick' },
+              { label: 'Extra thick', value: '4px', cssVar: '--border-extra-thick' },
+              { label: 'Very thick', value: '5px', cssVar: '--border-very-thick' },
+              { label: 'Ultra thick', value: '6px', cssVar: '--border-ultra-thick' },
+              { label: 'Super thick', value: '8px', cssVar: '--border-super-thick' },
+              { label: 'Mega thick', value: '10px', cssVar: '--border-mega-thick' }
+            ]}
+            getValueFromCSSVar={(value) => String(value || '')}
+          />
+
+          {/* Border Style - Visual Controller */}
+          <div style={{ marginBottom: '20px' }}>
             <label style={{
               display: 'block',
               fontSize: '14px',
               fontWeight: '500',
               color: '#333',
-              marginBottom: '8px'
+              marginBottom: '12px'
             }}>
-              Border Width
+              Border Style
             </label>
-            <select
-              value={localStyle.borderWidth || ''}
-              onChange={(e) => handleStyleChange('borderWidth', e.target.value)}
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                fontSize: '14px',
-                backgroundColor: '#fff'
-              }}
-            >
-              <option value="">Select border width</option>
-              <option value="0px">0px (No border)</option>
-              <option value="1px">1px (Thin)</option>
-              <option value="2px">2px (Medium)</option>
-              <option value="3px">3px (Thick)</option>
-              <option value="4px">4px (Extra thick)</option>
-              <option value="5px">5px (Very thick)</option>
-              <option value="6px">6px (Ultra thick)</option>
-              <option value="8px">8px (Super thick)</option>
-              <option value="10px">10px (Mega thick)</option>
-            </select>
-          </div>
+            
+            {/* Global Border Style */}
+            <div style={{ marginBottom: '12px' }}>
+              <label style={{
+                display: 'block',
+                fontSize: '12px',
+                fontWeight: '500',
+                color: '#666',
+                marginBottom: '6px'
+              }}>
+                All Sides
+              </label>
+              <BorderStyleSelect
+                label=""
+                value={localStyle.borderStyle || ''}
+                onChange={(value) => {
+                  handleStyleChange('borderStyle', value);
+                  handleStyleChange('borderTopStyle', value);
+                  handleStyleChange('borderRightStyle', value);
+                  handleStyleChange('borderBottomStyle', value);
+                  handleStyleChange('borderLeftStyle', value);
+                }}
+                placeholder="Select border style for all sides"
+              />
+            </div>
 
-          {/* Border Style */}
-          <BorderStyleSelect
-            label="Border Style"
-            value={localStyle.borderStyle || ''}
-            onChange={(value) => handleStyleChange('borderStyle', value)}
-            placeholder="Select border style"
-          />
+            {/* Individual Border Styles */}
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-start',
+              marginBottom: '12px'
+            }}>
+              {/* Top */}
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+                <div style={{
+                  width: '60px',
+                  height: '20px',
+                  border: '2px solid #ddd',
+                  borderBottom: 'none',
+                  backgroundColor: '#f8f9fa',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '10px',
+                  color: '#666',
+                  borderRadius: '4px 4px 0 0',
+                  marginRight: '8px'
+                }}>
+                  Top
+                </div>
+                <BorderStyleSelect
+                  label=""
+                  value={localStyle.borderTopStyle || ''}
+                  onChange={(value) => handleStyleChange('borderTopStyle', value)}
+                  placeholder="Top style"
+                />
+              </div>
+
+              {/* Middle Row */}
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+                <div style={{ display: 'flex' }}>
+                  <div style={{
+                    width: '20px',
+                    height: '40px',
+                    border: '2px solid #ddd',
+                    borderRight: 'none',
+                    backgroundColor: '#f8f9fa',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '10px',
+                    color: '#666',
+                    borderRadius: '0 0 0 4px',
+                    writingMode: 'vertical-rl',
+                    textOrientation: 'mixed',
+                    marginRight: '8px'
+                  }}>
+                    Left
+                  </div>
+                  <div style={{
+                    width: '40px',
+                    height: '40px',
+                    border: '2px solid #ddd',
+                    backgroundColor: '#fff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '8px',
+                    color: '#999',
+                    marginRight: '8px'
+                  }}>
+                    Style
+                  </div>
+                  <div style={{
+                    width: '20px',
+                    height: '40px',
+                    border: '2px solid #ddd',
+                    borderLeft: 'none',
+                    backgroundColor: '#f8f9fa',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '10px',
+                    color: '#666',
+                    borderRadius: '0 0 4px 0',
+                    writingMode: 'vertical-rl',
+                    textOrientation: 'mixed',
+                    marginRight: '8px'
+                  }}>
+                    Right
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <BorderStyleSelect
+                    label=""
+                    value={localStyle.borderLeftStyle || ''}
+                    onChange={(value) => handleStyleChange('borderLeftStyle', value)}
+                    placeholder="Left"
+                  />
+                  <BorderStyleSelect
+                    label=""
+                    value={localStyle.borderRightStyle || ''}
+                    onChange={(value) => handleStyleChange('borderRightStyle', value)}
+                    placeholder="Right"
+                  />
+                </div>
+              </div>
+
+              {/* Bottom */}
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <div style={{
+                  width: '60px',
+                  height: '20px',
+                  border: '2px solid #ddd',
+                  borderTop: 'none',
+                  backgroundColor: '#f8f9fa',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '10px',
+                  color: '#666',
+                  borderRadius: '0 0 4px 4px',
+                  marginRight: '8px'
+                }}>
+                  Bottom
+                </div>
+                <BorderStyleSelect
+                  label=""
+                  value={localStyle.borderBottomStyle || ''}
+                  onChange={(value) => handleStyleChange('borderBottomStyle', value)}
+                  placeholder="Bottom style"
+                />
+              </div>
+            </div>
+          </div>
 
           {/* Border Color */}
           <ColorSelect
@@ -723,69 +1214,39 @@ export const StylePanel: React.FC<StylePanelProps> = ({ palette, radius, spacing
 
       {activeStyleTab === 'spacing' && (
         <div style={{ paddingTop: '8px' }}>
-          {/* Margin */}
-          <div style={{ marginBottom: '16px' }}>
-            <label style={{
-              display: 'block',
-              fontSize: '14px',
-              fontWeight: '500',
-              color: '#333',
-              marginBottom: '8px'
-            }}>
-              Margin
-            </label>
-            <select
-              value={getValueFromCSSVar(localStyle.margin) || ''}
-              onChange={(e) => handleStyleChange('margin', e.target.value)}
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                fontSize: '14px',
-                backgroundColor: '#fff'
-              }}
-            >
-              <option value="">Select margin</option>
-              {spacingOptions.map((option) => (
-                <option key={option.cssVar} value={option.value}>
-                  {option.label} ({option.value})
-                </option>
-              ))}
-            </select>
-          </div>
+          {/* Visual Margin Controller */}
+          <VisualSpacingController
+            label="Margin"
+            currentValues={{
+              top: localStyle.marginTop,
+              right: localStyle.marginRight,
+              bottom: localStyle.marginBottom,
+              left: localStyle.marginLeft
+            }}
+            onChange={(side, value) => {
+              const property = `margin${side.charAt(0).toUpperCase() + side.slice(1)}`;
+              handleStyleChange(property, value);
+            }}
+            spacingOptions={spacingOptions}
+            getValueFromCSSVar={getValueFromCSSVar}
+          />
 
-          {/* Padding */}
-          <div style={{ marginBottom: '16px' }}>
-            <label style={{
-              display: 'block',
-              fontSize: '14px',
-              fontWeight: '500',
-              color: '#333',
-              marginBottom: '8px'
-            }}>
-              Padding
-            </label>
-            <select
-              value={getValueFromCSSVar(localStyle.padding) || ''}
-              onChange={(e) => handleStyleChange('padding', e.target.value)}
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                fontSize: '14px',
-                backgroundColor: '#fff'
-              }}
-            >
-              <option value="">Select padding</option>
-              {spacingOptions.map((option) => (
-                <option key={option.cssVar} value={option.value}>
-                  {option.label} ({option.value})
-                </option>
-              ))}
-            </select>
-          </div>
+          {/* Visual Padding Controller */}
+          <VisualSpacingController
+            label="Padding"
+            currentValues={{
+              top: localStyle.paddingTop,
+              right: localStyle.paddingRight,
+              bottom: localStyle.paddingBottom,
+              left: localStyle.paddingLeft
+            }}
+            onChange={(side, value) => {
+              const property = `padding${side.charAt(0).toUpperCase() + side.slice(1)}`;
+              handleStyleChange(property, value);
+            }}
+            spacingOptions={spacingOptions}
+            getValueFromCSSVar={getValueFromCSSVar}
+          />
 
           {/* Gap */}
           <div style={{ marginBottom: '16px' }}>
