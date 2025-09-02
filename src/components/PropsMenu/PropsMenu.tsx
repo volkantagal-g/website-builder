@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
-import { FiChevronUp, FiChevronDown, FiGrid, FiList, FiMove, FiGlobe } from 'react-icons/fi';
+import { FiChevronUp, FiChevronDown, FiGrid, FiList, FiMove, FiGlobe, FiEdit } from 'react-icons/fi';
 import { ComponentMetadata } from '../FullPage';
 import { PropInputFactory } from './PropInputFactory';
 import { INITIAL_PROPS_MENU_HEIGHT, MAX_PROPS_MENU_HEIGHT } from './constants';
 
 import { ApiEndpointsPanel } from './ApiEndpointsPanel';
+import { StylePanel } from './StylePanel';
 
 export interface PropsMenuProps {
   selectedComponent: ComponentMetadata | null;
   onPropsChange: (componentId: string, newProps: Record<string, any>) => void;
   componentId?: string;
   canvasData?: any; // Component ağacı için
+  palette?: Record<string, string>; // Pinnate palette CSS variables
   onComponentMove?: (dragId: string, targetId: string, position: 'before' | 'after' | 'inside') => void; // Component taşıma için
   onComponentHover?: (componentId: string | undefined) => void; // Component hover için
   onComponentSelect?: (componentId: string) => void; // Component seçimi için
@@ -21,6 +23,7 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
   onPropsChange, 
   componentId,
   canvasData,
+  palette = {},
   onComponentMove,
   onComponentHover,
   onComponentSelect
@@ -521,6 +524,30 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
             Tree View
           </button>
 
+          {/* Style Tab */}
+          <button
+            onClick={() => setActiveTab('style')}
+            style={{
+              height: '100%',
+              padding: '0 16px',
+              backgroundColor: activeTab === 'style' ? '#ffffff' : 'transparent',
+              border: 'none',
+              borderBottom: activeTab === 'style' ? '2px solid #6b3ff7' : '2px solid transparent',
+              color: activeTab === 'style' ? '#6b3ff7' : '#666',
+              fontSize: '13px',
+              fontWeight: activeTab === 'style' ? '600' : '400',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              borderRadius: '0',
+            }}
+          >
+            <FiEdit size={14} />
+            Style
+          </button>
+          
           {/* API Endpoints Tab */}
           <button
             onClick={() => setActiveTab('api')}
@@ -598,6 +625,21 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {activeTab === 'style' && (
+          <div style={{
+            padding: '8px 0',
+            backgroundColor: '#ffffff',
+          }}>
+            <StylePanel 
+              palette={palette} 
+              selectedComponent={selectedComponent} 
+              componentId={componentId} 
+              canvasData={canvasData}
+              onPropsChange={onPropsChange} 
+            />
           </div>
         )}
 

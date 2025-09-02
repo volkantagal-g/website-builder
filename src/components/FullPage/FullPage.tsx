@@ -40,6 +40,7 @@ export interface FullPageProps extends React.HTMLAttributes<HTMLDivElement> {
     components: ComponentMetadata[];
   }>;
   children?: React.ReactNode;
+  palette?: Record<string, string>; // Pinnate palette CSS variables
 }
 
 // Draggable Component Item
@@ -56,7 +57,8 @@ const DraggableComponent: React.FC<{
   onContainerHover?: (containerId: string, isHovering: boolean) => void;
   hoveredComponentId?: string | null;
   zIndex?: number;
-}> = ({ component, index, moveComponent, deleteComponent, isSelected, selectComponent, addComponentToContainer, setCanvasComponents, selectedComponentId, onContainerHover, hoveredComponentId, zIndex = 1 }) => {
+  canvasComponents: CanvasComponent[]; // Canvas components'ları prop olarak ekle
+}> = ({ component, index, moveComponent, deleteComponent, isSelected, selectComponent, addComponentToContainer, setCanvasComponents, selectedComponentId, onContainerHover, hoveredComponentId, zIndex = 1, canvasComponents }) => {
   const { getResponseData } = useApi();
   
   const [{ isDragging }, drag] = useDrag({
@@ -81,24 +83,54 @@ const DraggableComponent: React.FC<{
 
   // Container component'ler için drop zone
   const [{ isOver: isOverContainer }, containerDrop] = useDrop({
-    accept: 'SIDEBAR_COMPONENT',
+    accept: ['SIDEBAR_COMPONENT', 'COMPONENT'], // Hem sidebar hem canvas component'leri kabul et
     drop: (item: any) => {
       console.log('Container drop triggered:', {
         containerId: component.id,
-        componentName: item.component?.name,
+        componentName: item.component?.name || item.index,
         isContainer: component.metadata.type === 'container',
-        itemType: item.component?.type,
+        itemType: item.component?.type || 'canvas-component',
         fullItem: item
       });
       
-      if (addComponentToContainer && component.metadata.type === 'container' && item.component) {
-        console.log('Adding component to container');
-        addComponentToContainer(component.id, item.component);
+      if (addComponentToContainer && component.metadata.type === 'container') {
+        if (item.component) {
+          // Sidebar'dan gelen component
+          console.log('Adding sidebar component to container');
+          addComponentToContainer(component.id, item.component);
+        } else if (item.index !== undefined && setCanvasComponents) {
+          // Canvas'tan gelen component
+          console.log('Moving canvas component to container');
+          const draggedComponent = canvasComponents[item.index];
+          if (draggedComponent) {
+            // Component'i container'a taşı
+            setCanvasComponents(prev => {
+              const removeFromCanvas = (components: CanvasComponent[]): CanvasComponent[] => {
+                return components.filter((_, idx) => idx !== item.index);
+              };
+              
+              const addToContainer = (components: CanvasComponent[]): CanvasComponent[] => {
+                return components.map(comp => {
+                  if (comp.id === component.id) {
+                    return { ...comp, children: [...(comp.children || []), draggedComponent] };
+                  } else if (comp.children && comp.children.length > 0) {
+                    return { ...comp, children: addToContainer(comp.children) };
+                  }
+                  return comp;
+                });
+              };
+              
+              const updated = removeFromCanvas(prev);
+              return addToContainer(updated);
+            });
+          }
+        }
       } else {
         console.log('Cannot add to container:', {
           hasAddFunction: !!addComponentToContainer,
           componentType: component.metadata.type,
-          hasComponent: !!item.component
+          hasComponent: !!item.component,
+          hasIndex: item.index !== undefined
         });
       }
     },
@@ -111,7 +143,8 @@ const DraggableComponent: React.FC<{
       console.log('Container canDrop check:', { 
         componentId: component.id, 
         componentType: component.metadata.type, 
-        canDrop 
+        canDrop,
+        itemType: _item.component ? 'sidebar' : 'canvas'
       });
       return canDrop;
     },
@@ -134,7 +167,56 @@ const DraggableComponent: React.FC<{
     if (component.metadata.p && component.library !== 'general') {
       const ComponentToRender = component.metadata.p;
       
-      return <ComponentToRender {...component.props} />;
+      // Pinnate component'ler için güvenli style handling
+      const processedProps = processComponentProps(component.props, { getResponseData });
+      
+      // CSS property'leri filtrele, sadece gerçek CSS property'leri çıkar
+      // Component'in kendi prop'larını (children, size, variant, color, etc.) koru
+      const { 
+        style, 
+        className, 
+        id,
+        display, 
+        width, 
+        height, 
+        maxWidth, 
+        maxHeight, 
+        justifyContent, 
+        backgroundColor, 
+        border, 
+        borderRadius, 
+        padding, 
+        margin,
+        ...otherProps 
+      } = processedProps;
+      
+      // CSS property'leri style objesinde birleştir
+      const combinedStyle: CSSProperties = {};
+      
+      // Sadece geçerli değerleri ekle
+      if (style && typeof style === 'object' && !Array.isArray(style)) {
+        Object.entries(style).forEach(([key, value]) => {
+          if (value !== undefined && value !== null && value !== '' && 
+              (typeof value === 'string' || typeof value === 'number')) {
+            (combinedStyle as any)[key] = value;
+          }
+        });
+      }
+      
+      // Diğer CSS property'leri ekle
+      if (display) (combinedStyle as any).display = display;
+      if (width) combinedStyle.width = width;
+      if (height) combinedStyle.height = height;
+      if (maxWidth) combinedStyle.maxWidth = maxWidth;
+      if (maxHeight) combinedStyle.maxHeight = maxHeight;
+      if (justifyContent) (combinedStyle as any).justifyContent = justifyContent;
+      if (backgroundColor) combinedStyle.backgroundColor = backgroundColor;
+      if (border) combinedStyle.border = border;
+      if (borderRadius) combinedStyle.borderRadius = borderRadius;
+      if (padding) combinedStyle.padding = padding;
+      if (margin) combinedStyle.margin = margin;
+      
+      return <ComponentToRender {...otherProps} style={combinedStyle} className={className} id={id} />;
     }
     
     // Container component'ler için özel render
@@ -160,45 +242,44 @@ const DraggableComponent: React.FC<{
         margin
       } = processedProps;
       
+      // Style objesini güvenli hale getir
+      const safeStyle: CSSProperties = {
+        position: 'relative',
+        minHeight: '60px',
+        display: display || 'flex',
+        width: width || '100%',
+        height: height || 'auto',
+        maxWidth: maxWidth || 'none',
+        maxHeight: maxHeight || 'none',
+        justifyContent: justifyContent || 'flex-start',
+        backgroundColor: backgroundColor || 'transparent',
+        border: border || (isSelected ? '1px dashed #6b3ff7' : 
+               hoveredComponentId === component.id ? '1px solid #ff4444' : '1px dashed #ccc'),
+        borderRadius: borderRadius || '4px',
+        padding: padding || '16px',
+        margin: margin || '0',
+        outlineOffset: '4px',
+        zIndex: zIndex,
+      };
+
+      // Eğer style objesi varsa ve geçerliyse ekle
+      if (style && typeof style === 'object' && !Array.isArray(style)) {
+        Object.entries(style).forEach(([key, value]) => {
+          if (value !== undefined && value !== null && value !== '' && 
+              typeof key === 'string' && 
+              (typeof value === 'string' || typeof value === 'number')) {
+            (safeStyle as any)[key] = value;
+          }
+        });
+      }
+
       return (
         <div 
-          style={{
-            ...style,
-            position: 'relative',
-            minHeight: '60px',
-            display: display || 'flex',
-            width: width || '100%',
-            height: height || 'auto',
-            maxWidth: maxWidth || 'none',
-            maxHeight: maxHeight || 'none',
-            justifyContent: justifyContent || 'flex-start',
-            backgroundColor: backgroundColor || 'transparent',
-            border: border || (isSelected ? '1px dashed #6b3ff7' : 
-                   hoveredComponentId === component.id ? '1px solid #ff4444' : '1px dashed #ccc'),
-            borderRadius: borderRadius || '4px',
-            padding: padding || '16px',
-            margin: margin || '0',
-            outlineOffset: '4px',
-            zIndex: zIndex,
-          }}
+          style={safeStyle}
           className={className}
           id={id}
           data-component
-        >
-          {/* Container içeriği - sadece children yoksa göster */}
-          {(!component.children || component.children.length === 0) && (
-            <div style={{ 
-              color: '#666', 
-              fontSize: '14px', 
-              textAlign: 'center',
-              pointerEvents: 'none',
-              marginBottom: '8px',
-              zIndex: 1,
-            }}>
-              {component.props.children}
-            </div>
-          )}
-          
+        > 
           {/* Nested component'ler */}
           {component.children && component.children.length > 0 && (
             <>
@@ -265,6 +346,7 @@ const DraggableComponent: React.FC<{
                   onContainerHover={onContainerHover}
                   hoveredComponentId={hoveredComponentId}
                   zIndex={zIndex + 1}
+                  canvasComponents={canvasComponents} // Canvas components'ları ekle
                 />
               ))}
             </>
@@ -479,23 +561,24 @@ const DropZone: React.FC<{
         </div>
       ) : (
         <div style={{ width: '100%', height: '100%' }}>
-          {components.map((component, index) => (
-            <DraggableComponent
-              key={component.id}
-              component={component}
-              index={index}
-              moveComponent={moveComponent}
-              deleteComponent={deleteComponent}
-              isSelected={selectedComponentId === component.id}
-              selectComponent={selectComponent}
-              addComponentToContainer={addComponentToContainer}
-              setCanvasComponents={setCanvasComponents}
-              selectedComponentId={selectedComponentId}
-              onContainerHover={onContainerHover}
-              hoveredComponentId={hoveredComponentId}
-              zIndex={11}
-            />
-          ))}
+            {components.map((component, index) => (
+              <DraggableComponent
+                key={component.id}
+                component={component}
+                index={index}
+                moveComponent={moveComponent}
+                deleteComponent={deleteComponent}
+                isSelected={selectedComponentId === component.id}
+                selectComponent={selectComponent}
+                addComponentToContainer={addComponentToContainer}
+                setCanvasComponents={setCanvasComponents}
+                selectedComponentId={selectedComponentId}
+                onContainerHover={onContainerHover}
+                hoveredComponentId={hoveredComponentId}
+                zIndex={11}
+                canvasComponents={components} // Canvas components'ları ekle
+              />
+            ))}
         </div>
       )}
     </div>
@@ -509,6 +592,7 @@ export const FullPage = forwardRef<HTMLDivElement, FullPageProps>(
       components = [],
       style,
       children,
+      palette = {},
       ...props
     },
     ref
@@ -792,13 +876,13 @@ export const FullPage = forwardRef<HTMLDivElement, FullPageProps>(
     }, [currentDevice]);
 
     const handlePropsChange = (componentId: string, newProps: Record<string, any>) => {
-      console.log('Props change requested:', { componentId, newProps });
+      console.log('🔄 Props change requested:', { componentId, newProps });
       
       setCanvasComponents(prev => {
         const updatePropsRecursive = (components: CanvasComponent[]): CanvasComponent[] => {
           return components.map(comp => {
             if (comp.id === componentId) {
-              console.log('Updating component props:', { 
+              console.log('📝 Updating component props:', { 
                 componentId: comp.id, 
                 oldProps: comp.props, 
                 newProps 
@@ -812,7 +896,7 @@ export const FullPage = forwardRef<HTMLDivElement, FullPageProps>(
         };
         
         const updated = updatePropsRecursive(prev);
-        console.log('Canvas components updated:', updated);
+        console.log('✅ Canvas components updated:', updated);
         return updated;
       });
     };
@@ -941,6 +1025,7 @@ export const FullPage = forwardRef<HTMLDivElement, FullPageProps>(
             onPropsChange={handlePropsChange}
             componentId={selectedComponentId || undefined}
             canvasData={canvasComponents}
+            palette={palette} // Palette prop'unu geç
             onComponentHover={(componentId) => setHoveredComponentId(componentId || null)}
             onComponentSelect={(componentId) => setSelectedComponentId(componentId)}
             onComponentMove={(dragId, targetId, position) => {

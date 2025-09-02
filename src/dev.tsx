@@ -1,13 +1,13 @@
 import { createRoot } from 'react-dom/client';
 import { FullPage } from './components/FullPage';
-import { PinnateProvider, Components, p } from 'pinnate';
+import { PinnateProvider, Components, p, defaultTokens } from 'pinnate';
 import { generateAllPaletteCSSVariables } from 'pinnate/tokens/colors';
 import { PinnateIcon } from './icons/pinnate';
 import './styles/global.css';
 import 'pinnate/dist/index.css';
 
 const App = () => {
-  console.log(generateAllPaletteCSSVariables());
+  console.log(JSON.stringify(generateAllPaletteCSSVariables()));
   // Components'i p key'i ile map et
   const componentsWithP = Components.map(comp => ({
     ...comp,
@@ -18,8 +18,11 @@ const App = () => {
   //console.log(componentsWithP);
   
   return (
-    <PinnateProvider>
-      <FullPage components={[{name: 'Pinnate', logo: <PinnateIcon /> ,components: componentsWithP}]}>
+    <PinnateProvider tokens={defaultTokens}>
+      <FullPage
+        components={[{name: 'Pinnate', logo: <PinnateIcon /> ,components: componentsWithP}]}
+        palette={generateAllPaletteCSSVariables()}
+        >
       </FullPage>
     </PinnateProvider>
   );
