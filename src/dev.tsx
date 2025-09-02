@@ -1,13 +1,15 @@
 import { createRoot } from 'react-dom/client';
 import { FullPage } from './components/FullPage';
 import { PinnateProvider, Components, p, defaultTokens } from 'pinnate';
-import { generateAllPaletteCSSVariables } from 'pinnate/tokens/colors';
 import { PinnateIcon } from './icons/pinnate';
 import './styles/global.css';
 import 'pinnate/dist/index.css';
+import { generateAllPaletteCSSVariables } from 'pinnate/tokens/colors';
+import { generateAllRadiusCSSVariables } from 'pinnate/tokens/radius';
+import { generateAllSpacingCSSVariables } from 'pinnate/tokens/spacing';
 
 const App = () => {
-  console.log(JSON.stringify(generateAllPaletteCSSVariables()));
+  console.log(JSON.stringify(generateAllRadiusCSSVariables()));
   // Components'i p key'i ile map et
   const componentsWithP = Components.map(comp => ({
     ...comp,
@@ -22,6 +24,8 @@ const App = () => {
       <FullPage
         components={[{name: 'Pinnate', logo: <PinnateIcon /> ,components: componentsWithP}]}
         palette={generateAllPaletteCSSVariables()}
+        radius={generateAllRadiusCSSVariables()}
+        spacing={generateAllSpacingCSSVariables()}
         >
       </FullPage>
     </PinnateProvider>

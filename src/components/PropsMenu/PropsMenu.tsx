@@ -13,6 +13,8 @@ export interface PropsMenuProps {
   componentId?: string;
   canvasData?: any; // Component ağacı için
   palette?: Record<string, string>; // Pinnate palette CSS variables
+  radius?: Record<string, string>; // Pinnate radius CSS variables
+  spacing?: Record<string, string>; // Pinnate spacing CSS variables
   onComponentMove?: (dragId: string, targetId: string, position: 'before' | 'after' | 'inside') => void; // Component taşıma için
   onComponentHover?: (componentId: string | undefined) => void; // Component hover için
   onComponentSelect?: (componentId: string) => void; // Component seçimi için
@@ -24,6 +26,8 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
   componentId,
   canvasData,
   palette = {},
+  radius = {},
+  spacing = {},
   onComponentMove,
   onComponentHover,
   onComponentSelect
@@ -635,6 +639,8 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
           }}>
             <StylePanel 
               palette={palette} 
+              radius={radius}
+              spacing={spacing}
               selectedComponent={selectedComponent} 
               componentId={componentId} 
               canvasData={canvasData}

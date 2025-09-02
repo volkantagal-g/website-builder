@@ -41,6 +41,8 @@ export interface FullPageProps extends React.HTMLAttributes<HTMLDivElement> {
   }>;
   children?: React.ReactNode;
   palette?: Record<string, string>; // Pinnate palette CSS variables
+  radius?: Record<string, string>; // Pinnate radius CSS variables
+  spacing?: Record<string, string>; // Pinnate spacing CSS variables
 }
 
 // Draggable Component Item
@@ -593,6 +595,8 @@ export const FullPage = forwardRef<HTMLDivElement, FullPageProps>(
       style,
       children,
       palette = {},
+      radius = {},
+      spacing = {},
       ...props
     },
     ref
@@ -1026,6 +1030,8 @@ export const FullPage = forwardRef<HTMLDivElement, FullPageProps>(
             componentId={selectedComponentId || undefined}
             canvasData={canvasComponents}
             palette={palette} // Palette prop'unu geç
+            radius={radius} // Radius prop'unu geç
+            spacing={spacing} // Spacing prop'unu geç
             onComponentHover={(componentId) => setHoveredComponentId(componentId || null)}
             onComponentSelect={(componentId) => setSelectedComponentId(componentId)}
             onComponentMove={(dragId, targetId, position) => {
