@@ -153,7 +153,8 @@ export const StylePanel: React.FC<StylePanelProps> = ({ palette, radius, spacing
     return Object.entries(palette).map(([key, value]) => ({
       label: key.replace(/--pinnate-palette-/, '').replace(/-/g, ' '),
       value: value,
-      cssVar: key
+      cssVar: key,
+      color: value // Hex color değeri
     }));
   };
 
@@ -169,6 +170,230 @@ export const StylePanel: React.FC<StylePanelProps> = ({ palette, radius, spacing
   };
 
   const spacingOptions = getSpacingOptions();
+
+  // Border Style Select Component
+  const BorderStyleSelect: React.FC<{
+    label: string;
+    value: string;
+    onChange: (value: string) => void;
+    placeholder: string;
+  }> = ({ label, value, onChange, placeholder }) => {
+    const borderStyles = [
+      { value: 'solid', label: 'Solid', preview: '━━━━━━━━' },
+      { value: 'dashed', label: 'Dashed', preview: '┅┅┅┅┅┅┅┅' },
+      { value: 'dotted', label: 'Dotted', preview: '┈┈┈┈┈┈┈┈' },
+      { value: 'double', label: 'Double', preview: '════════' },
+      { value: 'groove', label: 'Groove', preview: '┌┐┌┐┌┐┌┐' },
+      { value: 'ridge', label: 'Ridge', preview: '└┘└┘└┘└┘' },
+      { value: 'inset', label: 'Inset', preview: '┌────────┐' },
+      { value: 'outset', label: 'Outset', preview: '└────────┘' },
+      { value: 'none', label: 'None', preview: 'No border' }
+    ];
+    
+    return (
+      <div style={{ marginBottom: '16px' }}>
+        <label style={{
+          display: 'block',
+          fontSize: '14px',
+          fontWeight: '500',
+          color: '#333',
+          marginBottom: '8px'
+        }}>
+          {label}
+        </label>
+        <div style={{ position: 'relative' }}>
+          <select
+            value={value || ''}
+            onChange={(e) => onChange(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '8px 120px 8px 8px', // Sağ tarafta preview için space
+              border: '1px solid #ddd',
+              borderRadius: '4px',
+              fontSize: '14px',
+              backgroundColor: '#fff',
+              appearance: 'none',
+              backgroundImage: 'none'
+            }}
+          >
+            <option value="">{placeholder}</option>
+            {borderStyles.map((style) => (
+              <option key={style.value} value={style.value}>
+                {style.label}
+              </option>
+            ))}
+          </select>
+          {/* Border Style Preview */}
+          <div style={{
+            position: 'absolute',
+            right: '8px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            fontSize: '12px',
+            color: '#666',
+            fontFamily: 'monospace',
+            pointerEvents: 'none'
+          }}>
+            {borderStyles.find(s => s.value === value)?.preview || 'Preview'}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Color Select Component
+  const ColorSelect: React.FC<{
+    label: string;
+    value: string;
+    onChange: (value: string) => void;
+    placeholder: string;
+  }> = ({ label, value, onChange, placeholder }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const selectedColor = getValueFromCSSVar(value);
+    const selectedOption = colorOptions.find(opt => opt.value === selectedColor);
+    
+    // Dropdown'ı dışına tıklandığında kapat
+    React.useEffect(() => {
+      const handleClickOutside = (event: MouseEvent) => {
+        const target = event.target as HTMLElement;
+        if (!target.closest('.color-select-dropdown')) {
+          setIsOpen(false);
+        }
+      };
+      
+      if (isOpen) {
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+      }
+    }, [isOpen]);
+    
+    return (
+      <div style={{ marginBottom: '16px' }}>
+        <label style={{
+          display: 'block',
+          fontSize: '14px',
+          fontWeight: '500',
+          color: '#333',
+          marginBottom: '8px'
+        }}>
+          {label}
+        </label>
+        <div className="color-select-dropdown" style={{ position: 'relative' }}>
+          {/* Custom Dropdown Button */}
+          <button
+            type="button"
+            onClick={() => setIsOpen(!isOpen)}
+            style={{
+              width: '100%',
+              padding: '8px 12px 8px 40px',
+              border: '1px solid #ddd',
+              borderRadius: '4px',
+              fontSize: '14px',
+              backgroundColor: '#fff',
+              textAlign: 'left',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}
+          >
+            <span style={{ color: selectedOption ? '#333' : '#999' }}>
+              {selectedOption ? `${selectedOption.label} (${selectedOption.value})` : placeholder}
+            </span>
+            <span style={{ 
+              transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+              transition: 'transform 0.2s ease'
+            }}>
+              ▼
+            </span>
+          </button>
+          
+          {/* Color Preview */}
+          <div style={{
+            position: 'absolute',
+            left: '8px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            width: '20px',
+            height: '20px',
+            borderRadius: '3px',
+            border: '1px solid #ddd',
+            backgroundColor: selectedColor || '#f0f0f0',
+            pointerEvents: 'none'
+          }} />
+          
+          {/* Dropdown Options */}
+          {isOpen && (
+            <div style={{
+              position: 'absolute',
+              top: '100%',
+              left: 0,
+              right: 0,
+              backgroundColor: '#fff',
+              border: '1px solid #ddd',
+              borderTop: 'none',
+              borderRadius: '0 0 4px 4px',
+              maxHeight: '200px',
+              overflowY: 'auto',
+              zIndex: 1000,
+              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+            }}>
+              {/* Clear Option */}
+              <div
+                onClick={() => {
+                  onChange('');
+                  setIsOpen(false);
+                }}
+                style={{
+                  padding: '8px 12px 8px 40px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  color: '#999',
+                  borderBottom: '1px solid #f0f0f0'
+                }}
+              >
+                {placeholder}
+              </div>
+              
+              {/* Color Options */}
+              {colorOptions.map((option) => (
+                <div
+                  key={option.cssVar}
+                  onClick={() => {
+                    onChange(option.value);
+                    setIsOpen(false);
+                  }}
+                  style={{
+                    padding: '8px 12px 8px 40px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    color: '#333',
+                    display: 'flex',
+                    alignItems: 'center',
+                    borderBottom: '1px solid #f0f0f0',
+                    backgroundColor: selectedColor === option.value ? '#f8f9fa' : 'transparent'
+                  }}
+                >
+                  {/* Option Color Preview */}
+                  <div style={{
+                    position: 'absolute',
+                    left: '8px',
+                    width: '20px',
+                    height: '20px',
+                    borderRadius: '3px',
+                    border: '1px solid #ddd',
+                    backgroundColor: option.color,
+                    marginRight: '8px'
+                  }} />
+                  <span>{option.label} ({option.value})</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   // CSS variable'dan değeri bul (palette, radius veya spacing'ten)
   const getValueFromCSSVar = (cssVar: string | number | undefined) => {
@@ -273,100 +498,28 @@ export const StylePanel: React.FC<StylePanelProps> = ({ palette, radius, spacing
       {activeStyleTab === 'colors' && (
         <div style={{ paddingTop: '8px' }}>
           {/* Color */}
-          <div style={{ marginBottom: '16px' }}>
-            <label style={{
-              display: 'block',
-              fontSize: '14px',
-              fontWeight: '500',
-              color: '#333',
-              marginBottom: '8px'
-            }}>
-              Color
-            </label>
-            <select
-              value={getValueFromCSSVar(localStyle.color) || ''}
-              onChange={(e) => handleStyleChange('color', e.target.value)}
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                fontSize: '14px',
-                backgroundColor: '#fff'
-              }}
-            >
-              <option value="">Select color</option>
-              {colorOptions.map((option) => (
-                <option key={option.cssVar} value={option.value}>
-                  {option.label} ({option.value})
-                </option>
-              ))}
-            </select>
-          </div>
+          <ColorSelect
+            label="Color"
+            value={localStyle.color || ''}
+            onChange={(value) => handleStyleChange('color', value)}
+            placeholder="Select color"
+          />
 
           {/* Background Color */}
-          <div style={{ marginBottom: '16px' }}>
-            <label style={{
-              display: 'block',
-              fontSize: '14px',
-              fontWeight: '500',
-              color: '#333',
-              marginBottom: '8px'
-            }}>
-              Background Color
-            </label>
-            <select
-              value={getValueFromCSSVar(localStyle.backgroundColor) || ''}
-              onChange={(e) => handleStyleChange('backgroundColor', e.target.value)}
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                fontSize: '14px',
-                backgroundColor: '#fff'
-              }}
-            >
-              <option value="">Select background color</option>
-              {colorOptions.map((option) => (
-                <option key={option.cssVar} value={option.value}>
-                  {option.label} ({option.value})
-                </option>
-              ))}
-            </select>
-          </div>
+          <ColorSelect
+            label="Background Color"
+            value={localStyle.backgroundColor || ''}
+            onChange={(value) => handleStyleChange('backgroundColor', value)}
+            placeholder="Select background color"
+          />
 
           {/* Border Color */}
-          <div style={{ marginBottom: '16px' }}>
-            <label style={{
-              display: 'block',
-              fontSize: '14px',
-              fontWeight: '500',
-              color: '#333',
-              marginBottom: '8px'
-            }}>
-              Border Color
-            </label>
-            <select
-              value={getValueFromCSSVar(localStyle.borderColor) || ''}
-              onChange={(e) => handleStyleChange('borderColor', e.target.value)}
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                fontSize: '14px',
-                backgroundColor: '#fff'
-              }}
-            >
-              <option value="">Select border color</option>
-              {colorOptions.map((option) => (
-                <option key={option.cssVar} value={option.value}>
-                  {option.label} ({option.value})
-                </option>
-              ))}
-            </select>
-          </div>
+          <ColorSelect
+            label="Border Color"
+            value={localStyle.borderColor || ''}
+            onChange={(value) => handleStyleChange('borderColor', value)}
+            placeholder="Select border color"
+          />
         </div>
       )}
 
@@ -482,6 +635,58 @@ export const StylePanel: React.FC<StylePanelProps> = ({ palette, radius, spacing
 
       {activeStyleTab === 'border' && (
         <div style={{ paddingTop: '8px' }}>
+          {/* Border Width */}
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{
+              display: 'block',
+              fontSize: '14px',
+              fontWeight: '500',
+              color: '#333',
+              marginBottom: '8px'
+            }}>
+              Border Width
+            </label>
+            <select
+              value={localStyle.borderWidth || ''}
+              onChange={(e) => handleStyleChange('borderWidth', e.target.value)}
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                fontSize: '14px',
+                backgroundColor: '#fff'
+              }}
+            >
+              <option value="">Select border width</option>
+              <option value="0px">0px (No border)</option>
+              <option value="1px">1px (Thin)</option>
+              <option value="2px">2px (Medium)</option>
+              <option value="3px">3px (Thick)</option>
+              <option value="4px">4px (Extra thick)</option>
+              <option value="5px">5px (Very thick)</option>
+              <option value="6px">6px (Ultra thick)</option>
+              <option value="8px">8px (Super thick)</option>
+              <option value="10px">10px (Mega thick)</option>
+            </select>
+          </div>
+
+          {/* Border Style */}
+          <BorderStyleSelect
+            label="Border Style"
+            value={localStyle.borderStyle || ''}
+            onChange={(value) => handleStyleChange('borderStyle', value)}
+            placeholder="Select border style"
+          />
+
+          {/* Border Color */}
+          <ColorSelect
+            label="Border Color"
+            value={localStyle.borderColor || ''}
+            onChange={(value) => handleStyleChange('borderColor', value)}
+            placeholder="Select border color"
+          />
+
           {/* Border Radius */}
           <div style={{ marginBottom: '16px' }}>
             <label style={{

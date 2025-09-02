@@ -203,6 +203,7 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
       const isDragged = draggedComponentId === component.id;
       const isDragOver = dragOverId === component.id;
       const isContainer = component.metadata?.type === 'container';
+      const isSelected = componentId === component.id; // Seçili component kontrolü
       
       return (
         <div key={component.id || index} style={{ marginLeft: level * 20 }}>
@@ -236,7 +237,8 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
               fontSize: '13px',
               backgroundColor: isDragged ? '#e3f2fd' : 
                              isDragOver ? '#f0f8ff' : 'transparent',
-              border: isDragged ? '1px dashed #6b3ff7' : 
+              border: isSelected ? '2px solid #6b3ff7' :
+                     isDragged ? '1px dashed #6b3ff7' : 
                      isDragOver ? '1px solid #6b3ff7' : '1px solid transparent',
               opacity: isDragged ? 0.5 : 1,
               // Hover border ekle - kırmızı border
@@ -504,30 +506,6 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
             Properties
           </button>
 
-          {/* Tree View Tab */}
-          <button
-            onClick={() => setActiveTab('tree')}
-            style={{
-              height: '100%',
-              padding: '0 16px',
-              backgroundColor: activeTab === 'tree' ? '#ffffff' : 'transparent',
-              border: 'none',
-              borderBottom: activeTab === 'tree' ? '2px solid #6b3ff7' : '2px solid transparent',
-              color: activeTab === 'tree' ? '#6b3ff7' : '#666',
-              fontSize: '13px',
-              fontWeight: activeTab === 'tree' ? '600' : '400',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              borderRadius: '0',
-            }}
-          >
-            <FiList size={14} />
-            Tree View
-          </button>
-
           {/* Style Tab */}
           <button
             onClick={() => setActiveTab('style')}
@@ -550,6 +528,30 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
           >
             <FiEdit size={14} />
             Style
+          </button>
+
+          {/* Tree View Tab */}
+          <button
+            onClick={() => setActiveTab('tree')}
+            style={{
+              height: '100%',
+              padding: '0 16px',
+              backgroundColor: activeTab === 'tree' ? '#ffffff' : 'transparent',
+              border: 'none',
+              borderBottom: activeTab === 'tree' ? '2px solid #6b3ff7' : '2px solid transparent',
+              color: activeTab === 'tree' ? '#6b3ff7' : '#666',
+              fontSize: '13px',
+              fontWeight: activeTab === 'tree' ? '600' : '400',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              borderRadius: '0',
+            }}
+          >
+            <FiList size={14} />
+            Tree View
           </button>
           
           {/* API Endpoints Tab */}

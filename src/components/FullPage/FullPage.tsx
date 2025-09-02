@@ -247,7 +247,7 @@ const DraggableComponent: React.FC<{
       // Style objesini güvenli hale getir
       const safeStyle: CSSProperties = {
         position: 'relative',
-        minHeight: '60px',
+        minHeight: '24px',
         display: display || 'flex',
         width: width || '100%',
         height: height || 'auto',
@@ -256,7 +256,7 @@ const DraggableComponent: React.FC<{
         justifyContent: justifyContent || 'flex-start',
         backgroundColor: backgroundColor || 'transparent',
         border: border || (isSelected ? '1px dashed #6b3ff7' : 
-               hoveredComponentId === component.id ? '1px solid #ff4444' : '1px dashed #ccc'),
+               hoveredComponentId === component.id ? '1px solid #ff4444' : 'none'),
         borderRadius: borderRadius || '4px',
         padding: padding || '16px',
         margin: margin || '0',
@@ -363,7 +363,7 @@ const DraggableComponent: React.FC<{
               left: 0,
               right: 0,
               bottom: 0,
-              border: isOverContainer ? '2px dashed #6b3ff7' : '2px dashed transparent',
+              border: isOverContainer ? '2px dashed #6b3ff7' : 'none',
               borderRadius: '4px',
               backgroundColor: isOverContainer ? 'rgba(0, 123, 255, 0.1)' : 'transparent',
               transition: 'all 0.2s ease',
@@ -404,14 +404,14 @@ const DraggableComponent: React.FC<{
     <div
       ref={(node) => drag(drop(node))}
       style={{
-        width: component.props?.width && typeof component.props.width === 'string' && component.props.width.includes('px') ? (parseInt(component.props.width) + 12 + 'px') : '100%',
+        width: component.props?.width && typeof component.props.width === 'string' && component.props.width.includes('px') ? (parseInt(component.props.width) + 12 + 'px') : 'auto',
         opacity: isDragging ? 0.5 : 1,
         cursor: 'move',
         position: 'relative',
         display: 'block',
         border: isSelected ? '2px solid #6b3ff7' : '2px solid transparent',
         borderRadius: '6px',
-        padding: '4px',
+        //padding: '4px',
         transition: 'all 0.2s ease',
       }}
       data-component
@@ -551,7 +551,7 @@ const DropZone: React.FC<{
       ref={drop}
       style={{
         height: '100%',
-        border: isOverCurrent ? '2px dashed #6b3ff7' : '2px dashed #ddd',
+        border: isOverCurrent ? '2px dashed #6b3ff7' : 'none',
         borderRadius: '8px',
         transition: 'all 0.2s ease',
         overflow: 'auto',

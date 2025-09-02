@@ -28,7 +28,7 @@
     "maxHeight": "none",
     "justifyContent": "flex-start",
     "backgroundColor": "transparent",
-    "border": "1px dashed #ccc",
+    "border": "none",
     "borderRadius": "4px",
     "padding": "16px",
     "margin": "0",
