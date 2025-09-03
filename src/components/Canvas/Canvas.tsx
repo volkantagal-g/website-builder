@@ -156,8 +156,6 @@ export const Canvas = forwardRef<HTMLDivElement, CanvasProps>(
               onComponentHover={(componentId) => canvasState.setHoveredComponentId(componentId || null)}
               onComponentSelect={(componentId) => canvasState.setSelectedComponentId(componentId)}
               onComponentMove={(dragId, targetId, position) => {
-                console.log('Component move requested:', { dragId, targetId, position });
-                
                 const moveComponentInTree = (components: CanvasComponent[]): CanvasComponent[] => {
                   const findComponent = (comps: CanvasComponent[]): CanvasComponent | undefined => {
                     for (const comp of comps) {
@@ -180,15 +178,18 @@ export const Canvas = forwardRef<HTMLDivElement, CanvasProps>(
                   }
                   
                   const removeComponent = (comps: CanvasComponent[]): CanvasComponent[] => {
-                    return comps.filter(comp => {
+                    return comps.map(comp => {
                       if (comp.id === dragId) {
-                        return false;
+                        return null; // Bu component'i kaldır
                       }
                       if (comp.children && comp.children.length > 0) {
-                        comp.children = removeComponent(comp.children);
+                        return {
+                          ...comp,
+                          children: removeComponent(comp.children)
+                        };
                       }
-                      return true;
-                    });
+                      return comp;
+                    }).filter(comp => comp !== null) as CanvasComponent[];
                   };
                   
                   let newComponents = removeComponent([...components]);
@@ -214,18 +215,36 @@ export const Canvas = forwardRef<HTMLDivElement, CanvasProps>(
                     
                     newComponents = addToContainer(newComponents);
                   } else {
-                    const targetIndex = newComponents.findIndex(c => c.id === targetId);
-                    if (targetIndex !== -1) {
+                    // Target component'i recursive olarak bul
+                    const findTargetRecursive = (comps: CanvasComponent[]): { component: CanvasComponent, parentArray: CanvasComponent[], index: number } | null => {
+                      for (let i = 0; i < comps.length; i++) {
+                        if (comps[i].id === targetId) {
+                          return { component: comps[i], parentArray: comps, index: i };
+                        }
+                        const children = comps[i].children;
+                        if (children && children.length > 0) {
+                          const found = findTargetRecursive(children);
+                          if (found) return found;
+                        }
+                      }
+                      return null;
+                    };
+                    
+                    const targetInfo = findTargetRecursive(newComponents);
+                    
+                    if (targetInfo) {
                       const componentToAdd = {
                         ...draggedComponent,
-                        parentId: undefined
+                        parentId: targetInfo.component.parentId
                       };
                       
                       if (position === 'before') {
-                        newComponents.splice(targetIndex, 0, componentToAdd);
+                        targetInfo.parentArray.splice(targetInfo.index, 0, componentToAdd);
                       } else {
-                        newComponents.splice(targetIndex + 1, 0, componentToAdd);
+                        targetInfo.parentArray.splice(targetInfo.index + 1, 0, componentToAdd);
                       }
+                    } else {
+                      console.error('Target component not found for before/after positioning');
                     }
                   }
                   

@@ -4,7 +4,7 @@ import { FiEdit3, FiTrash2, FiCopy } from 'react-icons/fi';
 import { useApi } from '../../context/ApiContext';
 import { processComponentProps } from '../../utils/templateBinding';
 import { DraggableComponentProps } from '../../types/canvas';
-import { getStyleValue, combineStyleProperties, getComponentLibrary, addToContainerRecursive } from '../../utils/canvasHelpers';
+import { getStyleValue, combineStyleProperties, getComponentLibrary, addToContainerRecursive, findAndRemoveComponent, removeComponentRecursive } from '../../utils/canvasHelpers';
 
 export const DraggableComponent: React.FC<DraggableComponentProps> = ({ 
   component, 
@@ -75,12 +75,10 @@ export const DraggableComponent: React.FC<DraggableComponentProps> = ({
           
           setCanvasComponents(prev => {
             // Helper function'ları kullan
-            const { findAndRemoveComponent } = require('../../utils/canvasHelpers');
             const { found, updated } = findAndRemoveComponent(prev, item.componentId);
             
             if (found) {
               // Component'i yeni container'a ekle
-              const { addToContainerRecursive } = require('../../utils/canvasHelpers');
               return addToContainerRecursive(updated, component.id, { ...found, parentId: component.id });
             }
             
@@ -155,7 +153,7 @@ export const DraggableComponent: React.FC<DraggableComponentProps> = ({
       // CSS property'leri style objesinde birleştir
       const combinedStyle = combineStyleProperties(processedProps);
       
-      return <ComponentToRender {...otherProps} style={combinedStyle} className={className} id={id} />;
+      return <ComponentToRender {...otherProps} style={combinedStyle}  id={id} />;
     }
     
     // Container component'ler için özel render
@@ -235,7 +233,6 @@ export const DraggableComponent: React.FC<DraggableComponentProps> = ({
                     // Nested component'i sil - recursive olarak
                     console.log('Deleting nested component:', { childId, containerId: component.id });
                     if (setCanvasComponents) {
-                      const { removeComponentRecursive } = require('../../utils/canvasHelpers');
                       setCanvasComponents(prev => removeComponentRecursive(prev, childId));
                     }
                   }}
@@ -246,9 +243,10 @@ export const DraggableComponent: React.FC<DraggableComponentProps> = ({
                     console.log('Adding to nested container:', { containerId, componentName: metadata.name });
                     if (setCanvasComponents) {
                       const library = getComponentLibrary(metadata.name);
+                      const newComponentId = `component-${Date.now()}-${Math.random()}`;
                       
                       const newComponent = {
-                        id: `component-${Date.now()}-${Math.random()}`,
+                        id: newComponentId,
                         library,
                         metadata,
                         props: { ...metadata.initialValues },
@@ -257,6 +255,11 @@ export const DraggableComponent: React.FC<DraggableComponentProps> = ({
                       };
                       
                       setCanvasComponents(prev => addToContainerRecursive(prev, containerId, newComponent));
+                      
+                      // Yeni eklenen component'i seç
+                      if (selectComponent) {
+                        selectComponent(newComponentId);
+                      }
                     }
                   }}
                   setCanvasComponents={setCanvasComponents}

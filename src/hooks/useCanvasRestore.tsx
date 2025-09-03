@@ -68,12 +68,16 @@ export const useCanvasRestore = (
       };
     } else {
       // Pinnate Component için orijinal metadata'yı bul
+      console.log('🔍 Looking for Pinnate component:', comp.metadata.name);
+      console.log('📊 Available components:', components.map(c => ({ name: c.name, hasP: !!c.p })));
+      
       const originalMetadata = components.find(
         (meta: ComponentMetadata) => meta.name === comp.metadata.name
       );
       
       if (originalMetadata) {
         console.log('✅ Re-injecting Pinnate p function for', comp.metadata.name, ':', typeof originalMetadata.p);
+        console.log('🎯 Original metadata p function:', originalMetadata.p);
         
         // Pinnate component'ler için de metadata'yı merge et
         const mergedMetadata = mergeComponentMetadata(originalMetadata, comp.metadata);
@@ -89,6 +93,7 @@ export const useCanvasRestore = (
       }
       
       console.log('❌ No Pinnate metadata found for:', comp.metadata.name);
+      console.log('📋 Available Pinnate components:', components.map(c => ({ name: c.name, hasP: !!c.p })));
       return comp;
     }
   };

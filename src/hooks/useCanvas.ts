@@ -87,8 +87,8 @@ export const useCanvas = (components: ComponentMetadata[]) => {
         return updated;
       });
       
-      // Container'ı selected yap
-      setSelectedComponentId(parentId);
+      // Yeni eklenen component'i seç (container'ı değil)
+      setSelectedComponentId(newComponent.id);
     } else {
       console.log('Adding to main canvas');
       // Ana canvas'a component ekle

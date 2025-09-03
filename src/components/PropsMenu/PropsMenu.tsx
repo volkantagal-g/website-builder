@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { FiChevronUp, FiChevronDown, FiGrid, FiList, FiMove, FiGlobe, FiEdit } from 'react-icons/fi';
 import { ComponentMetadata } from '../../types/canvas';
 import { PropInputFactory } from './PropInputFactory';
@@ -41,6 +41,51 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
   const [draggedComponentId, setDraggedComponentId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [dragPosition, setDragPosition] = useState<'before' | 'after' | 'inside' | null>(null);
+  const [expandedComponents, setExpandedComponents] = useState<Set<string>>(new Set());
+  const treeViewRef = useRef<HTMLDivElement>(null);
+
+  // Tree View'da seçili component'e scroll yap ve tüm tree'sini aç
+  useEffect(() => {
+    if (activeTab === 'tree' && componentId && treeViewRef.current) {
+      // Seçili component'in tüm parent'larını aç
+      const expandPathToComponent = (components: any[], targetId: string, path: string[] = []): string[] => {
+        for (const comp of components) {
+          const currentPath = [...path, comp.id];
+          if (comp.id === targetId) {
+            return currentPath;
+          }
+          if (comp.children && comp.children.length > 0) {
+            const found = expandPathToComponent(comp.children, targetId, currentPath);
+            if (found.length > 0) {
+              return found;
+            }
+          }
+        }
+        return [];
+      };
+
+      const pathToComponent = expandPathToComponent(canvasData || [], componentId);
+      if (pathToComponent.length > 0) {
+        setExpandedComponents(prev => {
+          const newSet = new Set(prev);
+          pathToComponent.forEach(id => newSet.add(id));
+          return newSet;
+        });
+      }
+
+      // Kısa bir gecikme ile scroll yap (DOM güncellenmesi için)
+      setTimeout(() => {
+        const selectedElement = treeViewRef.current?.querySelector(`[data-component-id="${componentId}"]`);
+        if (selectedElement) {
+          selectedElement.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+            inline: 'nearest'
+          });
+        }
+      }, 100);
+    }
+  }, [activeTab, componentId, canvasData]);
 
   // Component değiştiğinde local props'u güncelle
   React.useEffect(() => {
@@ -204,13 +249,15 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
       const isDragOver = dragOverId === component.id;
       const isContainer = component.metadata?.type === 'container';
       const isSelected = componentId === component.id; // Seçili component kontrolü
+      const hasChildren = component.children && component.children.length > 0;
+      const isExpanded = expandedComponents.has(component.id);
       
       return (
         <div key={component.id || index} style={{ marginLeft: level * 20 }}>
           {/* Drop zone before component */}
           {isDragOver && dragPosition === 'before' && (
             <div style={{
-              height: '4px',
+              height: '24px',
               backgroundColor: '#6b3ff7',
               margin: '4px 0',
               borderRadius: '2px',
@@ -219,6 +266,7 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
           )}
           
           <div 
+            data-component-id={component.id}
             draggable
             onDragStart={(e) => handleDragStart(e, component.id)}
             onDragOver={(e) => handleDragOver(e, component.id)}
@@ -246,6 +294,51 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
             }}
           >
             <FiMove size={12} style={{ marginRight: '8px', color: '#666', opacity: 0.7 }} />
+            
+            {/* Expand/Collapse Icon */}
+            {hasChildren ? (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setExpandedComponents(prev => {
+                    const newSet = new Set(prev);
+                    if (isExpanded) {
+                      newSet.delete(component.id);
+                    } else {
+                      newSet.add(component.id);
+                    }
+                    return newSet;
+                  });
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  padding: '2px',
+                  marginRight: '4px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '2px',
+                  transition: 'background-color 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#f0f0f0';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
+              >
+                {isExpanded ? (
+                  <FiChevronDown size={12} style={{ color: '#666' }} />
+                ) : (
+                  <FiChevronUp size={12} style={{ color: '#666', transform: 'rotate(-90deg)' }} />
+                )}
+              </button>
+            ) : (
+              <div style={{ width: '16px', marginRight: '4px' }} />
+            )}
+            
             <FiGrid size={12} style={{ marginRight: '8px', color: '#666' }} />
             <span style={{ color: '#333', fontWeight: '500' }}>
               {component.metadata?.name || component.name || 'Unknown Component'}
@@ -292,8 +385,8 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
             </div>
           )}
           
-          {/* Nested components */}
-          {component.children && component.children.length > 0 && (
+          {/* Nested components - sadece expand edildiğinde göster */}
+          {hasChildren && isExpanded && (
             <div style={{ marginLeft: '16px' }}>
               {renderComponentTree(component.children, level + 1)}
             </div>
@@ -302,7 +395,7 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
           {/* Drop zone after component */}
           {isDragOver && dragPosition === 'after' && (
             <div style={{
-              height: '4px',
+              height: '24px',
               backgroundColor: '#6b3ff7',
               margin: '4px 0',
               borderRadius: '2px',
@@ -668,11 +761,13 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
             }}>
               Component Tree - Drag to reorder or nest
             </div>
-            <div style={{
-              maxHeight: `${MAX_PROPS_MENU_HEIGHT}px`,
-              overflow: 'auto',
-              padding: '8px 0',
-            }}>
+            <div 
+              ref={treeViewRef}
+              style={{
+                maxHeight: `${MAX_PROPS_MENU_HEIGHT}px`,
+                overflow: 'auto',
+                padding: '8px 0',
+              }}>
               {renderComponentTree(canvasData || [])}
             </div>
           </div>
