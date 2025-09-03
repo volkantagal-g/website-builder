@@ -38,8 +38,8 @@ export const useCanvas = (components: ComponentMetadata[]) => {
       return;
     }
     
-    // Component'e tıklanmadıysa ve canvas'a tıklandıysa selected component'ı temizle
-    if (target.closest('[data-canvas]') && !target.closest('[data-component]')) {
+    // Component'e tıklanmadıysa selected component'ı temizle
+    if (!target.closest('[data-component]')) {
       setSelectedComponentId(null);
     }
   };
@@ -178,6 +178,38 @@ export const useCanvas = (components: ComponentMetadata[]) => {
     setSelectedComponentId(componentId);
   };
 
+  // Parent component'i bulma fonksiyonu
+  const findParentComponent = (components: CanvasComponent[], targetId: string): CanvasComponent | null => {
+    for (const component of components) {
+      if (component.children) {
+        for (const child of component.children) {
+          if (child.id === targetId) {
+            return component;
+          }
+          // Recursive olarak nested component'lerde ara
+          const found = findParentComponent([child], targetId);
+          if (found) {
+            return found;
+          }
+        }
+      }
+    }
+    return null;
+  };
+
+  const selectParentComponent = (componentId: string) => {
+    console.log('🔍 Looking for parent of component:', componentId);
+    console.log('📋 Current canvas components:', canvasComponents);
+    const parent = findParentComponent(canvasComponents, componentId);
+    console.log('👨‍👩‍👧‍👦 Found parent:', parent);
+    if (parent) {
+      console.log('✅ Selecting parent component:', parent.id);
+      setSelectedComponentId(parent.id);
+    } else {
+      console.log('❌ No parent found for component:', componentId);
+    }
+  };
+
   const handlePropsChange = (componentId: string, newProps: Record<string, any>) => {
     console.log('🔄 Props change requested:', { componentId, newProps });
     
@@ -246,6 +278,7 @@ export const useCanvas = (components: ComponentMetadata[]) => {
     deleteComponent,
     handleDeviceChange,
     selectComponent,
+    selectParentComponent,
     handlePropsChange,
     handleZoomIn,
     handleZoomOut,

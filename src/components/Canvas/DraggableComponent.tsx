@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
-import { FiEdit3, FiTrash2, FiCopy } from 'react-icons/fi';
+import { FiArrowUp, FiTrash2, FiCopy } from 'react-icons/fi';
 import { useApi } from '../../context/ApiContext';
 import { processComponentProps } from '../../utils/templateBinding';
 import { DraggableComponentProps } from '../../types/canvas';
@@ -13,10 +13,12 @@ export const DraggableComponent: React.FC<DraggableComponentProps> = ({
   deleteComponent, 
   isSelected, 
   selectComponent, 
+  selectParentComponent,
   addComponentToContainer, 
   setCanvasComponents, 
   selectedComponentId, 
   onContainerHover, 
+  onComponentHover,
   hoveredComponentId, 
   zIndex = 1, 
   canvasComponents, 
@@ -238,6 +240,7 @@ export const DraggableComponent: React.FC<DraggableComponentProps> = ({
                   }}
                   isSelected={selectedComponentId === child.id}
                   selectComponent={selectComponent}
+                  selectParentComponent={selectParentComponent}
                   addComponentToContainer={(containerId, metadata) => {
                     // Nested container'a component ekle - recursive olarak
                     console.log('Adding to nested container:', { containerId, componentName: metadata.name });
@@ -265,6 +268,7 @@ export const DraggableComponent: React.FC<DraggableComponentProps> = ({
                   setCanvasComponents={setCanvasComponents}
                   selectedComponentId={selectedComponentId}
                   onContainerHover={onContainerHover}
+                  onComponentHover={onComponentHover}
                   hoveredComponentId={hoveredComponentId}
                   zIndex={zIndex + 1}
                   canvasComponents={canvasComponents}
@@ -335,11 +339,15 @@ export const DraggableComponent: React.FC<DraggableComponentProps> = ({
         cursor: 'move',
         position: 'relative',
         display: componentDisplay || 'block',
-        border: isSelected ? '2px solid #6b3ff7' : 'none',
+        border: isSelected ? '2px solid #6b3ff7' : 
+                hoveredComponentId === component.id ? '1px solid #dc3545' : 'none',
         borderRadius: '6px',
-        transition: 'all 0.2s ease',
+        //transition: 'all 0.2s ease',
+        backgroundColor: hoveredComponentId === component.id ? 'rgba(248, 249, 250, 0.5)' : 'transparent',
       }}
       data-component
+      onMouseEnter={() => onComponentHover?.(component.id)}
+      onMouseLeave={() => onComponentHover?.(undefined)}
     >
       {/* Görünmez overlay div */}
       <div
@@ -355,6 +363,8 @@ export const DraggableComponent: React.FC<DraggableComponentProps> = ({
           height: '100%',
         }}
         onClick={() => selectComponent(component.id)}
+        onMouseEnter={() => onComponentHover?.(component.id)}
+        onMouseLeave={() => onComponentHover?.(undefined)}
       />
       
       {/* Seçim butonları - Sağ alt tarafta */}
@@ -370,7 +380,9 @@ export const DraggableComponent: React.FC<DraggableComponentProps> = ({
           <button
             onClick={(e) => {
               e.stopPropagation();
-              console.log('Edit component:', component.id);
+              console.log('🔘 Parent button clicked for component:', component.id);
+              console.log('🔧 selectParentComponent function:', selectParentComponent);
+              selectParentComponent?.(component.id);
             }}
             style={{
               background: '#6b3ff7',
@@ -396,9 +408,9 @@ export const DraggableComponent: React.FC<DraggableComponentProps> = ({
               e.currentTarget.style.backgroundColor = '#6b3ff7';
               e.currentTarget.style.transform = 'scale(1)';
             }}
-            title="Edit component"
+            title="Select parent component"
           >
-            <FiEdit3 size={14} />
+            <FiArrowUp size={14} />
           </button>
           <button
             onClick={(e) => {

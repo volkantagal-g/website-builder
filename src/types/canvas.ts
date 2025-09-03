@@ -41,10 +41,12 @@ export interface DraggableComponentProps {
   deleteComponent: (id: string) => void;
   isSelected: boolean;
   selectComponent: (id: string) => void;
+  selectParentComponent?: (id: string) => void;
   addComponentToContainer?: (containerId: string, metadata: ComponentMetadata) => void;
   setCanvasComponents?: React.Dispatch<React.SetStateAction<CanvasComponent[]>>;
   selectedComponentId?: string | null;
   onContainerHover?: (containerId: string, isHovering: boolean) => void;
+  onComponentHover?: (componentId: string | undefined) => void;
   hoveredComponentId?: string | null;
   zIndex?: number;
   canvasComponents: CanvasComponent[];
@@ -59,10 +61,12 @@ export interface DropZoneProps {
   deleteComponent: (id: string) => void;
   selectedComponentId: string | null;
   selectComponent: (id: string) => void;
+  selectParentComponent?: (id: string) => void;
   addComponentToContainer?: (containerId: string, metadata: ComponentMetadata) => void;
   setCanvasComponents?: React.Dispatch<React.SetStateAction<CanvasComponent[]>>;
   hoveredContainerId: string | null;
   onContainerHover?: (containerId: string, isHovering: boolean) => void;
+  onComponentHover?: (componentId: string | undefined) => void;
   hoveredComponentId: string | null;
   copyComponent: (id: string) => void;
 }

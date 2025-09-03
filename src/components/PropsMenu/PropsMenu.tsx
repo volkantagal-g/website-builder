@@ -42,7 +42,9 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [dragPosition, setDragPosition] = useState<'before' | 'after' | 'inside' | null>(null);
   const [expandedComponents, setExpandedComponents] = useState<Set<string>>(new Set());
+  const [hoveredComponentId, setHoveredComponentId] = useState<string | null>(null);
   const treeViewRef = useRef<HTMLDivElement>(null);
+  const dragOverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Tree View'da seçili component'e scroll yap ve tüm tree'sini aç
   useEffect(() => {
@@ -86,6 +88,15 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
       }, 100);
     }
   }, [activeTab, componentId, canvasData]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (dragOverTimeoutRef.current) {
+        clearTimeout(dragOverTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Component değiştiğinde local props'u güncelle
   React.useEffect(() => {
@@ -194,17 +205,27 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
     
     let position: 'before' | 'after' | 'inside';
     
-    if (y < height * 0.3) {
+    // Daha büyük threshold'lar ve daha stabil logic
+    if (y < height * 0.25) {
       position = 'before';
-    } else if (y > height * 0.7) {
+    } else if (y > height * 0.75) {
       position = 'after';
     } else {
       position = 'inside';
     }
     
-    setDragOverId(targetId);
-    setDragPosition(position);
+    // Debounce ile state güncellemesi (titremeyi önlemek için)
+    if (dragOverTimeoutRef.current) {
+      clearTimeout(dragOverTimeoutRef.current);
+    }
     
+    dragOverTimeoutRef.current = setTimeout(() => {
+      // Sadece değişiklik varsa state'i güncelle
+      if (dragOverId !== targetId || dragPosition !== position) {
+        setDragOverId(targetId);
+        setDragPosition(position);
+      }
+    }, 16); // ~60fps için 16ms debounce
   };
 
   const handleDragLeave = () => {
@@ -251,17 +272,19 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
       const isSelected = componentId === component.id; // Seçili component kontrolü
       const hasChildren = component.children && component.children.length > 0;
       const isExpanded = expandedComponents.has(component.id);
+      const isHovered = hoveredComponentId === component.id;
       
       return (
         <div key={component.id || index} style={{ marginLeft: level * 20 }}>
           {/* Drop zone before component */}
           {isDragOver && dragPosition === 'before' && (
             <div style={{
-              height: '24px',
+              height: '6px',
               backgroundColor: '#6b3ff7',
-              margin: '4px 0',
-              borderRadius: '2px',
-              opacity: 0.8,
+              margin: '6px 0',
+              borderRadius: '3px',
+              opacity: 0.9,
+              boxShadow: '0 0 8px rgba(107, 63, 247, 0.3)',
             }} />
           )}
           
@@ -272,8 +295,14 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
             onDragOver={(e) => handleDragOver(e, component.id)}
             onDragLeave={handleDragLeave}
             onDrop={(e) => handleDrop(e, component.id)}
-            onMouseEnter={() => onComponentHover?.(component.id)}
-            onMouseLeave={() => onComponentHover?.(undefined)}
+            onMouseEnter={() => {
+              setHoveredComponentId(component.id);
+              onComponentHover?.(component.id);
+            }}
+            onMouseLeave={() => {
+              setHoveredComponentId(null);
+              onComponentHover?.(undefined);
+            }}
             onClick={() => onComponentSelect?.(component.id)}
             style={{
               display: 'flex',
@@ -284,13 +313,16 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
               transition: 'all 0.2s ease',
               fontSize: '13px',
               backgroundColor: isDragged ? '#e3f2fd' : 
-                             isDragOver ? '#f0f8ff' : 'transparent',
+                             isDragOver ? '#f0f8ff' : 
+                             isHovered ? '#f8f9fa' : 'transparent',
               border: isSelected ? '2px solid #6b3ff7' :
                      isDragged ? '1px dashed #6b3ff7' : 
-                     isDragOver ? '1px solid #6b3ff7' : '1px solid transparent',
+                     isDragOver ? '1px solid #6b3ff7' : 
+                     isHovered ? '1px solid #e0e0e0' : '1px solid transparent',
               opacity: isDragged ? 0.5 : 1,
               // Hover border ekle - kırmızı border
-              boxShadow: isDragOver ? '0 0 0 2px #ff4444' : 'none',
+              boxShadow: isDragOver ? '0 0 0 2px #ff4444' : 
+                         isHovered ? '0 0 0 1px #e0e0e0' : 'none',
             }}
           >
             <FiMove size={12} style={{ marginRight: '8px', color: '#666', opacity: 0.7 }} />
@@ -372,14 +404,16 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
           {/* Drop zone inside container */}
           {isContainer && isDragOver && dragPosition === 'inside' && (
             <div style={{
-              margin: '4px 0',
-              padding: '8px',
+              margin: '6px 0',
+              padding: '12px',
               backgroundColor: '#e3f2fd',
-              border: '1px dashed #6b3ff7',
-              borderRadius: '4px',
+              border: '2px dashed #6b3ff7',
+              borderRadius: '6px',
               textAlign: 'center',
-              fontSize: '11px',
+              fontSize: '12px',
               color: '#6b3ff7',
+              fontWeight: '500',
+              boxShadow: '0 0 12px rgba(107, 63, 247, 0.2)',
             }}>
               Drop here to nest
             </div>
@@ -395,11 +429,12 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
           {/* Drop zone after component */}
           {isDragOver && dragPosition === 'after' && (
             <div style={{
-              height: '24px',
+              height: '6px',
               backgroundColor: '#6b3ff7',
-              margin: '4px 0',
-              borderRadius: '2px',
-              opacity: 0.8,
+              margin: '6px 0',
+              borderRadius: '3px',
+              opacity: 0.9,
+              boxShadow: '0 0 8px rgba(107, 63, 247, 0.3)',
             }} />
           )}
         </div>

@@ -10,10 +10,12 @@ export const DropZone: React.FC<DropZoneProps> = ({
   deleteComponent, 
   selectedComponentId, 
   selectComponent, 
+  selectParentComponent,
   addComponentToContainer, 
   setCanvasComponents, 
   hoveredContainerId, 
   onContainerHover, 
+  onComponentHover,
   hoveredComponentId, 
   copyComponent 
 }) => {
@@ -59,10 +61,12 @@ export const DropZone: React.FC<DropZoneProps> = ({
                 deleteComponent={deleteComponent}
                 isSelected={selectedComponentId === component.id}
                 selectComponent={selectComponent}
+                selectParentComponent={selectParentComponent}
                 addComponentToContainer={addComponentToContainer}
                 setCanvasComponents={setCanvasComponents}
                 selectedComponentId={selectedComponentId}
                 onContainerHover={onContainerHover}
+                onComponentHover={onComponentHover}
                 hoveredComponentId={hoveredComponentId}
                 zIndex={11}
                 canvasComponents={components}

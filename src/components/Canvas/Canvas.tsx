@@ -117,6 +117,7 @@ export const Canvas = forwardRef<HTMLDivElement, CanvasProps>(
                 deleteComponent={canvasState.deleteComponent}
                 selectedComponentId={canvasState.selectedComponentId}
                 selectComponent={canvasState.selectComponent}
+                selectParentComponent={canvasState.selectParentComponent}
                 addComponentToContainer={canvasState.addComponentToContainer}
                 setCanvasComponents={canvasState.setCanvasComponents}
                 hoveredContainerId={canvasState.hoveredContainerId}
@@ -129,6 +130,7 @@ export const Canvas = forwardRef<HTMLDivElement, CanvasProps>(
                     canvasState.setHoveredContainerId(null);
                   }
                 }}
+                onComponentHover={(componentId) => canvasState.setHoveredComponentId(componentId || null)}
               />
               
               {children}
