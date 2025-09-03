@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FiChevronUp, FiChevronDown, FiGrid, FiList, FiMove, FiGlobe, FiEdit } from 'react-icons/fi';
-import { ComponentMetadata } from '../FullPage';
+import { ComponentMetadata } from '../../types/canvas';
 import { PropInputFactory } from './PropInputFactory';
 import { INITIAL_PROPS_MENU_HEIGHT, MAX_PROPS_MENU_HEIGHT } from './constants';
 

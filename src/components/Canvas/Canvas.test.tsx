@@ -1,13 +1,13 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { FullPage } from './FullPage';
+import { Canvas } from './Canvas';
 
-describe('FullPage', () => {
+describe('Canvas', () => {
   it('renders children correctly', () => {
     render(
-      <FullPage>
+      <Canvas>
         <div data-testid="test-child">Test Content</div>
-      </FullPage>
+      </Canvas>
     );
     
     expect(screen.getByTestId('test-child')).toBeInTheDocument();
@@ -16,7 +16,7 @@ describe('FullPage', () => {
 
   it('applies custom styles correctly', () => {
     const { container } = render(
-      <FullPage
+      <Canvas
         minHeight="50vh"
         verticalAlign="start"
         horizontalAlign="end"
@@ -24,13 +24,13 @@ describe('FullPage', () => {
         padding="2rem"
       >
         <div>Content</div>
-      </FullPage>
+      </Canvas>
     );
 
-    const fullPageDiv = container.firstChild as HTMLElement;
-    const computedStyle = window.getComputedStyle(fullPageDiv);
+    const canvasDiv = container.firstChild as HTMLElement;
+    const computedStyle = window.getComputedStyle(canvasDiv);
 
-    expect(fullPageDiv).toHaveStyle({
+    expect(canvasDiv).toHaveStyle({
       minHeight: '50vh',
       justifyContent: 'start',
       alignItems: 'end',
@@ -41,19 +41,19 @@ describe('FullPage', () => {
 
   it('forwards ref correctly', () => {
     const ref = React.createRef<HTMLDivElement>();
-    render(<FullPage ref={ref}>Content</FullPage>);
+    render(<Canvas ref={ref}>Content</Canvas>);
 
     expect(ref.current).toBeInstanceOf(HTMLDivElement);
   });
 
   it('spreads additional props to the root element', () => {
     render(
-      <FullPage data-testid="full-page" className="custom-class">
+      <Canvas data-testid="canvas" className="custom-class">
         Content
-      </FullPage>
+      </Canvas>
     );
 
-    const element = screen.getByTestId('full-page');
+    const element = screen.getByTestId('canvas');
     expect(element).toHaveClass('custom-class');
   });
 });

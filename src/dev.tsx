@@ -1,5 +1,5 @@
 import { createRoot } from 'react-dom/client';
-import { FullPage } from './components/FullPage';
+import { Canvas } from './components/Canvas';
 import { PinnateProvider, Components, p, defaultTokens } from 'pinnate';
 import { PinnateIcon } from './icons/pinnate';
 import './styles/global.css';
@@ -21,13 +21,13 @@ const App = () => {
   
   return (
     <PinnateProvider tokens={defaultTokens}>
-      <FullPage
+      <Canvas
         components={[{name: 'Pinnate', logo: <PinnateIcon /> ,components: componentsWithP}]}
         palette={generateAllPaletteCSSVariables()}
         radius={generateAllRadiusCSSVariables()}
         spacing={generateAllSpacingCSSVariables()}
         >
-      </FullPage>
+      </Canvas>
     </PinnateProvider>
   );
 };

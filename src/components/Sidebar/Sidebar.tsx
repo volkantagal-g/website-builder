@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, CSSProperties } from 'react';
 import { useDrag } from 'react-dnd';
 import { DraggableIcon } from '../../icons/draggable';
-import { ComponentMetadata } from '../FullPage';
+import { ComponentMetadata } from '../../types/canvas';
 import { generalElementsMetadata } from '../../metadata';
 import { HtmlIcon } from '../../icons/html';
 
