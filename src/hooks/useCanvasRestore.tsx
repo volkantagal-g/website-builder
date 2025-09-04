@@ -171,24 +171,49 @@ export const useCanvasRestore = (
     // Components'i güncelle
     lastComponentsRef.current = components;
 
-    const savedComponents = localStorage.getItem(STORAGE_KEYS.CANVAS_COMPONENTS);
+    const savedCanvasData = localStorage.getItem(STORAGE_KEYS.CANVAS_COMPONENTS);
     
-    if (savedComponents) {
+    if (savedCanvasData) {
       try {
         console.log('📂 Loading canvas from localStorage');
         isRestoringRef.current = true;
         
-        const parsedComponents = JSON.parse(savedComponents);
+        const parsedData = JSON.parse(savedCanvasData);
+        
+        // Yeni format: { components: [], endpoints: [] }
+        // Eski format: [] (sadece components array'i)
+        let componentsToRestore = [];
+        let endpoints = [];
+        
+        if (parsedData.components && Array.isArray(parsedData.components)) {
+          // Yeni format
+          componentsToRestore = parsedData.components;
+          endpoints = parsedData.endpoints || [];
+          console.log('📊 Loaded canvas data with endpoints:', endpoints.length, 'endpoints');
+        } else if (Array.isArray(parsedData)) {
+          // Eski format - backward compatibility
+          componentsToRestore = parsedData;
+          console.log('📊 Loaded canvas data (legacy format)');
+        } else {
+          console.log('❌ Invalid canvas data format');
+          return;
+        }
         
         // localStorage'dan yüklenen component'lere metadata.p'yi geri ekle
         // Recursive olarak tüm nested component'leri restore et
-        const restoredComponents = parsedComponents.map((comp: any) => {
+        const restoredComponents = componentsToRestore.map((comp: any) => {
           console.log('🔄 Starting recursive restore for:', comp.metadata?.name || 'unknown');
           return restoreComponentRecursive(comp);
         });
         
         console.log('Final restored components:', restoredComponents);
         setCanvasComponents(restoredComponents);
+        
+        // Endpoint'leri de restore et (Canvas component'ine geçirilecek)
+        if (endpoints.length > 0) {
+          console.log('📊 Restoring endpoints:', endpoints);
+          // Endpoint'leri Canvas component'ine geçirmek için bir callback kullanacağız
+        }
         
         // Restore işlemi tamamlandı
         setTimeout(() => {

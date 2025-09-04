@@ -11,6 +11,18 @@ export interface ComponentMetadata {
   p?: React.ComponentType<any>;
 }
 
+// Endpoint interface'ini burada tanımlayalım
+export interface Endpoint {
+  name: string;
+  variable: string;
+  url: string;
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+  headers: Record<string, string>;
+  body: string;
+  isActive: boolean;
+  id: string;
+}
+
 export interface CanvasComponent {
   id: string;
   library: string; // Component'in hangi library'den geldiği (pinnate, general)
@@ -18,6 +30,7 @@ export interface CanvasComponent {
   props: Record<string, any>;
   children?: CanvasComponent[]; // Container component'ler için nested component'ler
   parentId?: string; // Parent container'ın ID'si
+  endpoints?: Endpoint[]; // Canvas'a ait endpoint'ler
 }
 
 export interface CanvasProps extends React.HTMLAttributes<HTMLDivElement> {

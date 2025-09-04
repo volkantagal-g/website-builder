@@ -14,13 +14,25 @@ export const useApi = () => {
 
 export const ApiProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [endpoints, setEndpoints] = useState<ApiEndpoint[]>(() => {
-    // Load endpoints from localStorage on initialization
+    // Load endpoints from canvas-components localStorage
     try {
-      const savedEndpoints = localStorage.getItem(STORAGE_KEYS.API_ENDPOINTS);
-      if (savedEndpoints) {
-        const parsed = JSON.parse(savedEndpoints);
-        console.log('📂 Loading API endpoints from localStorage:', parsed.length, 'endpoints');
-        return parsed;
+      const savedCanvasData = localStorage.getItem(STORAGE_KEYS.CANVAS_COMPONENTS);
+      if (savedCanvasData) {
+        const parsedData = JSON.parse(savedCanvasData);
+        
+        // Yeni format: { components: [], endpoints: [] }
+        if (parsedData.endpoints && Array.isArray(parsedData.endpoints)) {
+          console.log('📂 Loading API endpoints from canvas data:', parsedData.endpoints.length, 'endpoints');
+          return parsedData.endpoints;
+        }
+        
+        // Eski format - backward compatibility
+        const savedEndpoints = localStorage.getItem(STORAGE_KEYS.API_ENDPOINTS);
+        if (savedEndpoints) {
+          const parsed = JSON.parse(savedEndpoints);
+          console.log('📂 Loading API endpoints from legacy localStorage:', parsed.length, 'endpoints');
+          return parsed;
+        }
       }
     } catch (error) {
       console.error('Error loading API endpoints from localStorage:', error);
@@ -125,13 +137,51 @@ export const ApiProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return response?.data || null;
   }, [endpoints, responses]);
 
-  // Save endpoints to localStorage whenever they change
+  // Save endpoints to canvas-components localStorage whenever they change
   useEffect(() => {
     if (endpoints.length > 0) {
-      console.log('💾 Saving API endpoints to localStorage:', endpoints.length, 'endpoints');
-      localStorage.setItem(STORAGE_KEYS.API_ENDPOINTS, JSON.stringify(endpoints));
-    } else {
+      console.log('💾 Saving API endpoints to canvas data:', endpoints.length, 'endpoints');
+      
+      // Mevcut canvas data'yı oku
+      const savedCanvasData = localStorage.getItem(STORAGE_KEYS.CANVAS_COMPONENTS);
+      let canvasData: { components: unknown[]; endpoints: ApiEndpoint[] } = { components: [], endpoints: [] };
+      
+      if (savedCanvasData) {
+        try {
+          const parsed = JSON.parse(savedCanvasData);
+          if (parsed.components && Array.isArray(parsed.components)) {
+            canvasData = parsed;
+          } else if (Array.isArray(parsed)) {
+            // Eski format - components array'i
+            canvasData = { components: parsed, endpoints: [] };
+          }
+        } catch (error) {
+          console.error('Error parsing existing canvas data:', error);
+        }
+      }
+      
+      // Endpoint'leri güncelle
+      canvasData.endpoints = endpoints;
+      
+      // Canvas data'yı kaydet
+      localStorage.setItem(STORAGE_KEYS.CANVAS_COMPONENTS, JSON.stringify(canvasData));
+      
+      // Eski format'ı temizle
       localStorage.removeItem(STORAGE_KEYS.API_ENDPOINTS);
+    } else {
+      // Endpoint yoksa, canvas data'dan da kaldır
+      const savedCanvasData = localStorage.getItem(STORAGE_KEYS.CANVAS_COMPONENTS);
+      if (savedCanvasData) {
+        try {
+          const parsed = JSON.parse(savedCanvasData);
+          if (parsed.components && Array.isArray(parsed.components)) {
+            const updatedCanvasData = { ...parsed, endpoints: [] };
+            localStorage.setItem(STORAGE_KEYS.CANVAS_COMPONENTS, JSON.stringify(updatedCanvasData));
+          }
+        } catch (error) {
+          console.error('Error updating canvas data:', error);
+        }
+      }
     }
   }, [endpoints]);
 
