@@ -9,7 +9,7 @@ import { ZOOM_CONSTANTS } from '../../constants/zoom';
 import { STORAGE_KEYS } from '../../constants/storage';
 import { ApiProvider, useApi } from '../../context/ApiContext';
 import { CanvasProps, CanvasComponent, ComponentMetadata } from '../../types/canvas';
-// import { DevicePreset } from '../DeviceSelector/DeviceSelector';
+import { DevicePreset } from '../DeviceSelector/DeviceSelector';
 import { useCanvas } from '../../hooks/useCanvas';
 import { useCanvasRestore } from '../../hooks/useCanvasRestore';
 import { useCanvasKeyboard } from '../../hooks/useCanvasKeyboard';
@@ -38,6 +38,61 @@ const CanvasContent: React.FC<{
   // Use custom hooks
   const canvasState = useCanvas(flattenedComponents);
   useCanvasRestore(flattenedComponents, canvasState.setCanvasComponents);
+  
+  // Preview state
+  const [isPreview, setIsPreview] = useState(false);
+  
+  // Zoom state
+  const [zoom, setZoom] = useState(1);
+  
+  // Device state - localStorage'dan yükle
+  const [currentDevice, setCurrentDevice] = useState<DevicePreset>(() => {
+    try {
+      const savedDevice = localStorage.getItem(STORAGE_KEYS.CANVAS_DEVICE);
+      if (savedDevice) {
+        const parsed = JSON.parse(savedDevice);
+        return {
+          ...parsed,
+          icon: <></> // Icon'u her zaman boş olarak ayarla
+        };
+      }
+    } catch (error) {
+      console.error('Error loading device from localStorage:', error);
+    }
+    
+    // Default device
+    return {
+      id: 'iphone-11',
+      name: 'iPhone 11',
+      width: 375,
+      height: 812,
+      icon: <></>,
+      category: 'mobile'
+    };
+  });
+  
+  // Device change handler
+  const handleDeviceChange = (device: DevicePreset) => {
+    setCurrentDevice(device);
+    // Device'ı localStorage'a kaydet
+    localStorage.setItem(STORAGE_KEYS.CANVAS_DEVICE, JSON.stringify({
+      ...device,
+      icon: undefined // Icon'u JSON'da saklama
+    }));
+  };
+  
+  // Zoom functions
+  const handleZoomIn = () => {
+    setZoom(prev => Math.min(prev + ZOOM_CONSTANTS.ZOOM_STEP, ZOOM_CONSTANTS.MAX_ZOOM));
+  };
+  
+  const handleZoomOut = () => {
+    setZoom(prev => Math.max(prev - ZOOM_CONSTANTS.ZOOM_STEP, ZOOM_CONSTANTS.MIN_ZOOM));
+  };
+  
+  const handleZoomReset = () => {
+    setZoom(1);
+  };
   
   // Keyboard shortcuts
   useCanvasKeyboard(
@@ -100,35 +155,28 @@ const CanvasContent: React.FC<{
     }
   }, [canvasState.canvasComponents]);
 
-  // Current device değiştiğinde localStorage'a kaydet
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.CANVAS_DEVICE, JSON.stringify({
-      ...canvasState.currentDevice,
-      icon: undefined // Icon'u JSON'da saklama
-    }));
-  }, [canvasState.currentDevice]);
+  // Bu useEffect artık gerekli değil - device change handler'da kaydediyoruz
 
   const containerStyle: CSSProperties = {
     flexDirection: 'column',
     width: '100vw',
-    height: 'auto',
+    height: '100vh',
     backgroundColor: '#f0f0f0',
     boxSizing: 'border-box',
-    overflow: 'auto',
+    overflow: 'hidden',
     display: 'flex',
-    alignItems: 'center',
+    alignItems: 'stretch',
     justifyContent: 'center',
-    padding: '20px 20px 100px',
+    padding: '0',
     ...(style || {}),
   };
 
   const canvasStyle: CSSProperties = {
-    width: `${canvasState.currentDevice.width}px`,
-    height: `${canvasState.currentDevice.height}px`,
-    margin: '0 auto',
+    width: `${currentDevice.width}px`,
+    height: `${currentDevice.height}px`,
     backgroundColor: '#ffffff',
     overflow: 'auto',
-    transform: `scale(${canvasState.zoom})`,
+    transform: `scale(${zoom})`,
     transformOrigin: 'center top',
     transition: 'transform 0.2s ease',
     border: '1px solid #ddd',
@@ -138,31 +186,61 @@ const CanvasContent: React.FC<{
 
   return (
     <div ref={ref} style={containerStyle} {...props} onClick={canvasState.handleCanvasClick}>
-      <div style={canvasStyle} data-canvas>
-        <DropZone
-          onDrop={canvasState.addComponent}
-          components={canvasState.canvasComponents}
-          moveComponent={canvasState.moveComponent}
-          deleteComponent={canvasState.deleteComponent}
-          selectedComponentId={canvasState.selectedComponentId}
-          selectComponent={canvasState.selectComponent}
-          selectParentComponent={canvasState.selectParentComponent}
-          addComponentToContainer={canvasState.addComponentToContainer}
-          setCanvasComponents={canvasState.setCanvasComponents}
-          hoveredContainerId={canvasState.hoveredContainerId}
-          hoveredComponentId={canvasState.hoveredComponentId}
-          copyComponent={canvasState.copyComponent}
-          onContainerHover={(containerId, isHovering) => {
-            if (isHovering) {
-              canvasState.setHoveredContainerId(containerId);
-            } else if (canvasState.hoveredContainerId === containerId) {
-              canvasState.setHoveredContainerId(null);
-            }
-          }}
-          onComponentHover={(componentId) => canvasState.setHoveredComponentId(componentId || null)}
-        />
-        
-        {children}
+      {/* Canvas Actions Header */}
+      <CanvasActions 
+        canvasData={canvasState.canvasComponents}
+        onSave={(version) => console.log('Save requested for version:', version)}
+        onReset={() => console.log('Reset requested')}
+        onDeviceChange={handleDeviceChange}
+        currentDevice={currentDevice}
+        onPreviewToggle={setIsPreview}
+      />
+
+      <ZoomControl
+        zoom={zoom}
+        onZoomIn={handleZoomIn}
+        onZoomOut={handleZoomOut}
+        onZoomReset={handleZoomReset}
+        minZoom={ZOOM_CONSTANTS.MIN_ZOOM}
+        maxZoom={ZOOM_CONSTANTS.MAX_ZOOM}
+        zoomStep={ZOOM_CONSTANTS.ZOOM_STEP}
+      />
+
+      <div style={{
+        flex: '1',
+        overflow: 'auto',
+        display: 'flex',
+        //alignItems: 'center',
+        justifyContent: 'center',
+        padding: '20px',
+      }}>
+        <div style={canvasStyle} data-canvas>
+          <DropZone
+            onDrop={canvasState.addComponent}
+            components={canvasState.canvasComponents}
+            moveComponent={canvasState.moveComponent}
+            deleteComponent={canvasState.deleteComponent}
+            selectedComponentId={canvasState.selectedComponentId}
+            selectComponent={canvasState.selectComponent}
+            selectParentComponent={canvasState.selectParentComponent}
+            addComponentToContainer={canvasState.addComponentToContainer}
+            setCanvasComponents={canvasState.setCanvasComponents}
+            hoveredContainerId={canvasState.hoveredContainerId}
+            hoveredComponentId={canvasState.hoveredComponentId}
+            copyComponent={canvasState.copyComponent}
+            onContainerHover={(containerId, isHovering) => {
+              if (isHovering) {
+                canvasState.setHoveredContainerId(containerId);
+              } else if (canvasState.hoveredContainerId === containerId) {
+                canvasState.setHoveredContainerId(null);
+              }
+            }}
+            onComponentHover={(componentId) => canvasState.setHoveredComponentId(componentId || null)}
+            isPreview={isPreview}
+          />
+          
+          {children}
+        </div>
       </div>
 
       <Sidebar
@@ -308,20 +386,6 @@ export const Canvas = forwardRef<HTMLDivElement, CanvasProps>(
     return (
       <ApiProvider>
         <DndProvider backend={HTML5Backend}>
-          <CanvasActions 
-            canvasData={[]} // Bu kısım CanvasContent'te yönetilecek
-            onSave={(version) => console.log('Save requested for version:', version)}
-            onReset={() => console.log('Reset requested')}
-            onDeviceChange={() => {}} // Bu kısım CanvasContent'te yönetilecek
-            currentDevice={{
-              id: 'iphone-11',
-              name: 'iPhone 11',
-              width: 375,
-              height: 812,
-              icon: <></>,
-              category: 'mobile'
-            }} // Bu kısım CanvasContent'te yönetilecek
-          />
           <CanvasContent
             backgroundColor={backgroundColor}
             components={components}
@@ -333,15 +397,6 @@ export const Canvas = forwardRef<HTMLDivElement, CanvasProps>(
             typography={typography}
             ref={ref}
             props={props}
-          />
-          <ZoomControl
-            zoom={1} // Bu kısım CanvasContent'te yönetilecek
-            onZoomIn={() => {}}
-            onZoomOut={() => {}}
-            onZoomReset={() => {}}
-            minZoom={ZOOM_CONSTANTS.MIN_ZOOM}
-            maxZoom={ZOOM_CONSTANTS.MAX_ZOOM}
-            zoomStep={ZOOM_CONSTANTS.ZOOM_STEP}
           />
         </DndProvider>
       </ApiProvider>

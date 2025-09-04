@@ -3,7 +3,7 @@ import { useDrop } from 'react-dnd';
 import { DropZoneProps } from '../../types/canvas';
 import { DraggableComponent } from './DraggableComponent';
 
-export const DropZone: React.FC<DropZoneProps> = ({ 
+export const DropZone: React.FC<DropZoneProps & { isPreview?: boolean }> = ({ 
   onDrop, 
   components, 
   moveComponent, 
@@ -17,7 +17,8 @@ export const DropZone: React.FC<DropZoneProps> = ({
   onContainerHover, 
   onComponentHover,
   hoveredComponentId, 
-  copyComponent 
+  copyComponent,
+  isPreview = false
 }) => {
   const [{ isOver: isOverCurrent }, drop] = useDrop({
     accept: 'SIDEBAR_COMPONENT',
@@ -71,6 +72,7 @@ export const DropZone: React.FC<DropZoneProps> = ({
                 zIndex={11}
                 canvasComponents={components}
                 copyComponent={copyComponent}
+                isPreview={isPreview}
               />
             ))}
         </div>

@@ -6,7 +6,7 @@ import { processComponentProps } from '../../utils/templateBinding';
 import { DraggableComponentProps } from '../../types/canvas';
 import { getStyleValue, combineStyleProperties, getComponentLibrary, addToContainerRecursive, findAndRemoveComponent, removeComponentRecursive, isContainerComponent } from '../../utils/canvasHelpers';
 
-export const DraggableComponent: React.FC<DraggableComponentProps> = ({ 
+export const DraggableComponent: React.FC<DraggableComponentProps & { isPreview?: boolean }> = ({ 
   component, 
   index, 
   moveComponent, 
@@ -22,7 +22,8 @@ export const DraggableComponent: React.FC<DraggableComponentProps> = ({
   hoveredComponentId, 
   zIndex = 1, 
   canvasComponents, 
-  copyComponent 
+  copyComponent,
+  isPreview = false
 }) => {
   const { getResponseData } = useApi();
   
@@ -36,11 +37,13 @@ export const DraggableComponent: React.FC<DraggableComponentProps> = ({
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),
     }),
+    canDrag: !isPreview, // Preview modunda drag'i devre dışı bırak
   });
 
   const [, drop] = useDrop({
     accept: 'COMPONENT',
     hover: (item: { index: number; componentId: string; parentId?: string }) => {
+      if (isPreview) return; // Preview modunda hover işlemini devre dışı bırak
       if (item.index === index && item.parentId === component.parentId) return;
       // Container component'ler için pozisyon değişikliği yapma
       if (component.metadata.type === 'container') return;
@@ -51,13 +54,14 @@ export const DraggableComponent: React.FC<DraggableComponentProps> = ({
         item.index = index;
       }
     },
-    canDrop: () => component.metadata.type !== 'container',
+    canDrop: () => !isPreview && component.metadata.type !== 'container', // Preview modunda drop'u devre dışı bırak
   });
 
   // Container component'ler için drop zone (hem Pinnate hem general container'lar için)
   const [{ isOver: isOverContainer }, containerDrop] = useDrop({
     accept: ['SIDEBAR_COMPONENT', 'COMPONENT'], // Hem sidebar hem canvas component'leri kabul et
     drop: (item: any) => {
+      if (isPreview) return; // Preview modunda drop işlemini devre dışı bırak
       
       if (addComponentToContainer && (component.metadata.type === 'container' || isContainerComponent(component.metadata.name))) {
         if (item.component) {
@@ -87,6 +91,7 @@ export const DraggableComponent: React.FC<DraggableComponentProps> = ({
       isOver: monitor.isOver(),
     }),
     canDrop: (_item: any) => {
+      if (isPreview) return false; // Preview modunda drop'u devre dışı bırak
       const canDrop = component.metadata.type === 'container' || isContainerComponent(component.metadata.name);
       
       return canDrop;
@@ -184,14 +189,15 @@ export const DraggableComponent: React.FC<DraggableComponentProps> = ({
                       zIndex={zIndex + 1}
                       canvasComponents={canvasComponents}
                       copyComponent={copyComponent}
+                      isPreview={isPreview}
                     />
                   ))}
                 </>
               )}
             </ComponentToRender>
             
-            {/* Container drop zone - React DnD nested list example gibi */}
-            {(component.metadata.type === 'container' || isContainerComponent(component.metadata.name)) && (() => {
+            {/* Container drop zone - React DnD nested list example gibi - Preview modunda gizle */}
+            {!isPreview && (component.metadata.type === 'container' || isContainerComponent(component.metadata.name)) && (() => {
               return true;
             })() && (
               <div
@@ -276,8 +282,8 @@ export const DraggableComponent: React.FC<DraggableComponentProps> = ({
         maxHeight: maxHeight || 'none',
         justifyContent: justifyContent || 'flex-start',
         backgroundColor: backgroundColor || 'transparent',
-        border: border || (isSelected ? '1px dashed #6b3ff7' : 
-               hoveredComponentId === component.id ? '1px solid #ff4444' : 'none'),
+        border: border || (!isPreview && isSelected ? '1px dashed #6b3ff7' : 
+               !isPreview && hoveredComponentId === component.id ? '1px solid #ff4444' : 'none'),
         borderRadius: borderRadius || '4px',
         padding: padding || '16px',
         margin: margin || '0',
@@ -362,13 +368,14 @@ export const DraggableComponent: React.FC<DraggableComponentProps> = ({
                   zIndex={zIndex + 1}
                   canvasComponents={canvasComponents}
                   copyComponent={copyComponent}
+                  isPreview={isPreview}
                 />
               ))}
             </>
           )}
           
-          {/* Container drop zone - React DnD nested list example gibi */}
-          {(component.metadata.type === 'container' || isContainerComponent(component.metadata.name)) && (() => {
+          {/* Container drop zone - React DnD nested list example gibi - Preview modunda gizle */}
+          {!isPreview && (component.metadata.type === 'container' || isContainerComponent(component.metadata.name)) && (() => {
             return true;
           })() && (
             <div
@@ -439,7 +446,7 @@ export const DraggableComponent: React.FC<DraggableComponentProps> = ({
         width: componentWidth && typeof componentWidth === 'string' && componentWidth.includes('px') ? (parseInt(componentWidth) + 12 + 'px') : componentWidth || '100%',
         height: componentHeight && typeof componentHeight === 'string' && componentHeight.includes('px') ? (parseInt(componentHeight) + 12 + 'px') : componentHeight || 'auto',
         opacity: isDragging ? 0.5 : 1,
-        cursor: 'move',
+        cursor: isPreview ? 'default' : 'move',
         position: componentPosition || 'relative',
         ...(componentLeft && { left: componentLeft }),
         ...(componentRight && { right: componentRight }),
@@ -449,36 +456,38 @@ export const DraggableComponent: React.FC<DraggableComponentProps> = ({
         display: componentDisplay || 'block',
         maxWidth: componentMaxWidth || 'none',
         maxHeight: componentMaxHeight || 'none',
-        border: isSelected ? '2px solid #6b3ff7' : 
-                hoveredComponentId === component.id ? '1px solid #dc3545' : 'none',
+        border: !isPreview && isSelected ? '2px solid #6b3ff7' : 
+                !isPreview && hoveredComponentId === component.id ? '1px solid #dc3545' : 'none',
         borderRadius: '6px',
         //transition: 'all 0.2s ease',
-        backgroundColor: hoveredComponentId === component.id ? 'rgba(248, 249, 250, 0.5)' : 'transparent',
+        backgroundColor: !isPreview && hoveredComponentId === component.id ? 'rgba(248, 249, 250, 0.5)' : 'transparent',
       }}
       data-component
-      onMouseEnter={() => onComponentHover?.(component.id)}
-      onMouseLeave={() => onComponentHover?.(undefined)}
+      onMouseEnter={!isPreview ? () => onComponentHover?.(component.id) : undefined}
+      onMouseLeave={!isPreview ? () => onComponentHover?.(undefined) : undefined}
     >
-      {/* Görünmez overlay div */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          zIndex: 10,
-          cursor: 'pointer',
-          width: '100%',
-          height: '100%',
-        }}
-        onClick={() => selectComponent(component.id)}
-        onMouseEnter={() => onComponentHover?.(component.id)}
-        onMouseLeave={() => onComponentHover?.(undefined)}
-      />
+      {/* Görünmez overlay div - Preview modunda gizle */}
+      {!isPreview && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 10,
+            cursor: 'pointer',
+            width: '100%',
+            height: '100%',
+          }}
+          onClick={() => selectComponent(component.id)}
+          onMouseEnter={() => onComponentHover?.(component.id)}
+          onMouseLeave={() => onComponentHover?.(undefined)}
+        />
+      )}
       
-      {/* Seçim butonları - Sağ alt tarafta */}
-      {isSelected && (
+      {/* Seçim butonları - Sağ alt tarafta - Preview modunda gizle */}
+      {!isPreview && isSelected && (
         <div style={{
           position: 'absolute',
           right: '8px',

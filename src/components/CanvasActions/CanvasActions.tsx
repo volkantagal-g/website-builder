@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FiSave, FiRotateCcw } from 'react-icons/fi';
+import { FiSave, FiRotateCcw, FiEye, FiEyeOff } from 'react-icons/fi';
 import { DeviceSelector, DevicePreset } from '../DeviceSelector/DeviceSelector';
 import { useApi } from '../../context/ApiContext';
 
@@ -9,6 +9,7 @@ export interface CanvasActionsProps {
   onDeviceChange?: (device: DevicePreset) => void;
   currentDevice?: DevicePreset;
   canvasData?: any; // Canvas'taki component'lerin data'sı
+  onPreviewToggle?: (isPreview: boolean) => void; // Preview toggle callback
 }
 
 export const CanvasActions: React.FC<CanvasActionsProps> = ({ 
@@ -16,11 +17,13 @@ export const CanvasActions: React.FC<CanvasActionsProps> = ({
   onReset,
   onDeviceChange,
   currentDevice,
-  canvasData
+  canvasData,
+  onPreviewToggle
 }) => {
   const { endpoints } = useApi();
   const [selectedVersion, setSelectedVersion] = useState('v1.0.0');
   const [versions] = useState(['v1.0.0', 'v1.1.0', 'v2.0.0']);
+  const [isPreview, setIsPreview] = useState(false);
   // currentDevice prop'u kullan, local state yok
 
   const handleSave = () => {
@@ -149,6 +152,12 @@ export const CanvasActions: React.FC<CanvasActionsProps> = ({
     onReset?.();
   };
 
+  const handlePreviewToggle = () => {
+    const newPreviewState = !isPreview;
+    setIsPreview(newPreviewState);
+    onPreviewToggle?.(newPreviewState);
+  };
+
   const handleDeviceChange = (device: DevicePreset) => {
     onDeviceChange?.(device);
   };
@@ -165,7 +174,7 @@ export const CanvasActions: React.FC<CanvasActionsProps> = ({
       boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
       position: 'sticky',
       top: 0,
-      zIndex: 1000,
+      zIndex: 1,
     }}>
       <DeviceSelector 
         onDeviceChange={handleDeviceChange}
@@ -195,6 +204,32 @@ export const CanvasActions: React.FC<CanvasActionsProps> = ({
         </div>
         
         {/* Action Buttons */}
+        <button
+          onClick={handlePreviewToggle}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '8px 16px',
+            backgroundColor: isPreview ? '#28a745' : '#6c757d',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            fontSize: '14px',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = isPreview ? '#218838' : '#545b62';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = isPreview ? '#28a745' : '#6c757d';
+          }}
+        >
+          {isPreview ? <FiEyeOff size={16} /> : <FiEye size={16} />}
+          {isPreview ? 'Exit Preview' : 'Preview'}
+        </button>
+        
         <button
           onClick={handleSave}
           style={{
