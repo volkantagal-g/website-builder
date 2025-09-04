@@ -9,10 +9,11 @@ export interface PropInputFactoryProps {
   onChange: (propName: string, value: unknown) => void;
   palette?: Record<string, string>;
   typography?: Record<string, any>;
+  initialValue?: unknown;
 }
 
 export class PropInputFactory {
-  static createInput({ propName, propType, currentValue, onChange, palette = {}, typography = {} }: PropInputFactoryProps): React.ReactElement {
+  static createInput({ propName, propType, currentValue, onChange, palette = {}, typography = {}, initialValue }: PropInputFactoryProps): React.ReactElement {
     const cssOptions = getCSSPropertyOptions(palette, typography);
     
     // Boolean type için özel kontrol (en önce yapılmalı)
@@ -35,6 +36,7 @@ export class PropInputFactory {
           value={value}
           onChange={(newValue) => onChange(propName, newValue)}
           options={propType.options}
+          initialValue={initialValue ? String(initialValue) : undefined}
         />
       );
     }
@@ -62,6 +64,7 @@ export class PropInputFactory {
           value={value}
           onChange={(newValue) => onChange(propName, newValue)}
           options={options}
+          initialValue={initialValue ? String(initialValue) : undefined}
         />
       );
     }
@@ -69,7 +72,7 @@ export class PropInputFactory {
     // CSS property için özel kontrol (select type'dan SONRA)
     if (this.isCSSProperty(propName, cssOptions)) {
       const value = String(currentValue ?? CSS_PROPERTY_DEFAULTS[propName as CSSPropertyName]);
-      return this.createCSSPropertyInput(propName, value, onChange, cssOptions);
+      return this.createCSSPropertyInput(propName, value, onChange, cssOptions, initialValue);
     }
 
     // Temel type'lar için
@@ -85,7 +88,8 @@ export class PropInputFactory {
     propName: CSSPropertyName, 
     value: string, 
     onChange: (propName: string, value: unknown) => void,
-    cssOptions: Record<string, readonly string[]>
+    cssOptions: Record<string, readonly string[]>,
+    initialValue?: unknown
   ): React.ReactElement {
     const options = cssOptions[propName] as unknown as string[];
     const defaultValue = CSS_PROPERTY_DEFAULTS[propName];
@@ -95,6 +99,7 @@ export class PropInputFactory {
         value={value || defaultValue}
         onChange={(newValue) => onChange(propName, newValue)}
         options={options}
+        initialValue={initialValue ? String(initialValue) : undefined}
       />
     );
   }

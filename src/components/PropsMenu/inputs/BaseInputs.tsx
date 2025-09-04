@@ -51,31 +51,42 @@ export const NumberInput: React.FC<BaseInputProps> = ({
   />
 );
 
-export const SelectInput: React.FC<BaseInputProps & { options: string[] }> = ({ 
+export const SelectInput: React.FC<BaseInputProps & { options: string[]; initialValue?: string }> = ({ 
   value, 
   onChange, 
   options, 
-  style 
-}) => (
-  <select
-    value={value || options[0]}
-    onChange={(e) => onChange(e.target.value)}
-    style={{
-      width: '100%',
-      padding: '8px 12px',
-      border: '1px solid #ddd',
-      borderRadius: '4px',
-      fontSize: '14px',
-      ...style
-    }}
-  >
-    {options.map((option, index) => (
-      <option key={index} value={option}>
-        {option}
-      </option>
-    ))}
-  </select>
-);
+  style,
+  initialValue
+}) => {
+  // Eğer seçili değer initial değer değilse, placeholder göster
+  const showPlaceholder = value && initialValue && value !== initialValue;
+  
+  return (
+    <select
+      value={value || options[0]}
+      onChange={(e) => onChange(e.target.value)}
+      style={{
+        width: '100%',
+        padding: '8px 12px',
+        border: '1px solid #ddd',
+        borderRadius: '4px',
+        fontSize: '14px',
+        ...style
+      }}
+    >
+      {showPlaceholder && (
+        <option value="" disabled style={{ color: '#999', fontStyle: 'italic' }}>
+          Select Value
+        </option>
+      )}
+      {options.map((option, index) => (
+        <option key={index} value={option}>
+          {option}
+        </option>
+      ))}
+    </select>
+  );
+};
 
 export const ToggleInput: React.FC<BaseInputProps> = ({ 
   value, 

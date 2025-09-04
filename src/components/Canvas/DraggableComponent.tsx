@@ -58,17 +58,6 @@ export const DraggableComponent: React.FC<DraggableComponentProps> = ({
   const [{ isOver: isOverContainer }, containerDrop] = useDrop({
     accept: ['SIDEBAR_COMPONENT', 'COMPONENT'], // Hem sidebar hem canvas component'leri kabul et
     drop: (item: any) => {
-      console.log('🎯 CONTAINER DROP TRIGGERED:', {
-        containerId: component.id,
-        droppedComponentName: item.component?.name || item.index,
-        isContainer: component.metadata.type === 'container',
-        isContainerByName: isContainerComponent(component.metadata.name),
-        containerName: component.metadata.name,
-        itemType: item.component?.type || 'canvas-component',
-        fullItem: item,
-        hasAddFunction: !!addComponentToContainer,
-        hasSetCanvasComponents: !!setCanvasComponents
-      });
       
       if (addComponentToContainer && (component.metadata.type === 'container' || isContainerComponent(component.metadata.name))) {
         if (item.component) {
@@ -92,12 +81,6 @@ export const DraggableComponent: React.FC<DraggableComponentProps> = ({
           });
         }
       } else {
-        console.log('Cannot add to container:', {
-          hasAddFunction: !!addComponentToContainer,
-          componentType: component.metadata.type,
-          hasComponent: !!item.component,
-          hasIndex: item.index !== undefined
-        });
       }
     },
     collect: (monitor) => ({
@@ -106,16 +89,6 @@ export const DraggableComponent: React.FC<DraggableComponentProps> = ({
     canDrop: (_item: any) => {
       const canDrop = component.metadata.type === 'container' || isContainerComponent(component.metadata.name);
       
-      console.log('✅ CONTAINER CAN DROP CHECK:', { 
-        componentId: component.id, 
-        componentType: component.metadata.type,
-        componentName: component.metadata.name,
-        isContainer: isContainerComponent(component.metadata.name),
-        canDrop,
-        itemType: _item.component ? 'sidebar' : 'canvas',
-        itemComponent: _item.component?.name || 'canvas-component',
-        fullItem: _item
-      });
       return canDrop;
     },
   });

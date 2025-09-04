@@ -451,7 +451,8 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
       currentValue: localProps[propName] ?? currentValue,
       onChange: handlePropChange,
       palette: palette,
-      typography: typography
+      typography: typography,
+      initialValue: selectedComponent?.initialValues[propName]
     });
   };
 
