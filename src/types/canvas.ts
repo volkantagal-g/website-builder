@@ -31,6 +31,7 @@ export interface CanvasProps extends React.HTMLAttributes<HTMLDivElement> {
   palette?: Record<string, string>; // Pinnate palette CSS variables
   radius?: Record<string, string>; // Pinnate radius CSS variables
   spacing?: Record<string, string>; // Pinnate spacing CSS variables
+  typography?: Record<string, any>; // Pinnate typography CSS variables
 }
 
 // DraggableComponent Props

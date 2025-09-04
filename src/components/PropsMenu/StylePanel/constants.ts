@@ -31,6 +31,15 @@ export const JUSTIFY_CONTENT_OPTIONS = [
   { value: 'space-evenly', label: 'Space Evenly' }
 ];
 
+// Position options
+export const POSITION_OPTIONS = [
+  { value: 'static', label: 'Static' },
+  { value: 'relative', label: 'Relative' },
+  { value: 'absolute', label: 'Absolute' },
+  { value: 'fixed', label: 'Fixed' },
+  { value: 'sticky', label: 'Sticky' }
+];
+
 // Width options
 export const WIDTH_OPTIONS = [
   { value: 'auto', label: 'Auto' },

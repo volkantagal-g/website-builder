@@ -13,6 +13,7 @@ export const useCanvasRestore = (
   const restoreComponent = (comp: CanvasComponent) => {
     // Component'in kaynağını belirle
     const isGeneralElement = ['Div'].includes(comp.metadata.name);
+    const isContainerElement = ['Div', 'Form'].includes(comp.metadata.name);
     const library = isGeneralElement ? 'general' : 'pinnate';
     
     if (isGeneralElement) {
@@ -66,6 +67,33 @@ export const useCanvasRestore = (
           }
         }
       };
+    } else if (isContainerElement) {
+      // Pinnate container component'ler için (Form gibi)
+      console.log('🔍 Looking for Pinnate container component:', comp.metadata.name);
+      console.log('📊 Available components:', components.map(c => ({ name: c.name, hasP: !!c.p })));
+      
+      const originalMetadata = components.find(
+        (meta: ComponentMetadata) => meta.name === comp.metadata.name
+      );
+      
+      if (originalMetadata && originalMetadata.p) {
+        console.log('✅ Re-injecting Pinnate container p function for', comp.metadata.name, ':', typeof originalMetadata.p);
+        
+        // Pinnate container component'ler için de metadata'yı merge et
+        const mergedMetadata = mergeComponentMetadata(originalMetadata, comp.metadata);
+        
+        return {
+          ...comp,
+          library, // Library bilgisini ekle
+          metadata: {
+            ...mergedMetadata,
+            p: originalMetadata.p // Pinnate function'ı geri ekle
+          }
+        };
+      }
+      
+      console.log('❌ No Pinnate container metadata found for:', comp.metadata.name);
+      return comp;
     } else {
       // Pinnate Component için orijinal metadata'yı bul
       console.log('🔍 Looking for Pinnate component:', comp.metadata.name);

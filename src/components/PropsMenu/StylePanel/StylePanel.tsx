@@ -8,6 +8,7 @@ interface StylePanelProps {
   palette: Record<string, string>;
   radius: Record<string, string>;
   spacing: Record<string, string>;
+  typography?: Record<string, any>;
   selectedComponent: ComponentMetadata | null;
   componentId?: string;
   canvasData?: Record<string, unknown>;
@@ -18,6 +19,7 @@ export const StylePanel: React.FC<StylePanelProps> = ({
   palette,
   radius,
   spacing,
+  typography = {},
   selectedComponent,
   componentId,
   canvasData,
@@ -79,6 +81,7 @@ export const StylePanel: React.FC<StylePanelProps> = ({
           <TypographyTab
             localStyle={localStyle}
             onStyleChange={handleStyleChange}
+            typography={typography}
           />
         );
       case 'spacing':

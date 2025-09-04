@@ -1,6 +1,5 @@
 import React from 'react';
-import { SelectInput } from '../inputs';
-import { VisualSpacingController } from '../../VisualSpacingController';
+import { SelectInput, SpacingController } from '../inputs';
 import { SpacingOption, getValueFromCSSVar } from '../utils';
 
 interface SpacingTabProps {
@@ -22,39 +21,46 @@ export const SpacingTab: React.FC<SpacingTabProps> = ({
 }) => {
   return (
     <div style={{ paddingTop: '8px' }}>
-      {/* Visual Margin Controller */}
-      <VisualSpacingController
-        label="Margin"
-        currentValues={{
-          top: localStyle.marginTop,
-          right: localStyle.marginRight,
-          bottom: localStyle.marginBottom,
-          left: localStyle.marginLeft
-        }}
-        onChange={(side, value) => {
-          const property = `margin${side.charAt(0).toUpperCase() + side.slice(1)}`;
-          onStyleChange(property, value);
-        }}
-        spacingOptions={spacingOptions}
-        getValueFromCSSVar={(value) => getValueFromCSSVar(value, palette, radius, spacing)}
-      />
+      {/* Margin and Padding Side by Side */}
+      <div style={{ display: 'flex', gap: '20px', marginBottom: '20px' }}>
+        {/* Margin Controller */}
+        <div style={{ flex: 1 }}>
+          <SpacingController
+            label="Margin"
+            currentValues={{
+              top: localStyle.marginTop,
+              right: localStyle.marginRight,
+              bottom: localStyle.marginBottom,
+              left: localStyle.marginLeft
+            }}
+            onChange={(side, value) => {
+              const property = `margin${side.charAt(0).toUpperCase() + side.slice(1)}`;
+              onStyleChange(property, value);
+            }}
+            spacingOptions={spacingOptions}
+            getValueFromCSSVar={(value) => getValueFromCSSVar(value, palette, radius, spacing)}
+          />
+        </div>
 
-      {/* Visual Padding Controller */}
-      <VisualSpacingController
-        label="Padding"
-        currentValues={{
-          top: localStyle.paddingTop,
-          right: localStyle.paddingRight,
-          bottom: localStyle.paddingBottom,
-          left: localStyle.paddingLeft
-        }}
-        onChange={(side, value) => {
-          const property = `padding${side.charAt(0).toUpperCase() + side.slice(1)}`;
-          onStyleChange(property, value);
-        }}
-        spacingOptions={spacingOptions}
-        getValueFromCSSVar={(value) => getValueFromCSSVar(value, palette, radius, spacing)}
-      />
+        {/* Padding Controller */}
+        <div style={{ flex: 1 }}>
+          <SpacingController
+            label="Padding"
+            currentValues={{
+              top: localStyle.paddingTop,
+              right: localStyle.paddingRight,
+              bottom: localStyle.paddingBottom,
+              left: localStyle.paddingLeft
+            }}
+            onChange={(side, value) => {
+              const property = `padding${side.charAt(0).toUpperCase() + side.slice(1)}`;
+              onStyleChange(property, value);
+            }}
+            spacingOptions={spacingOptions}
+            getValueFromCSSVar={(value) => getValueFromCSSVar(value, palette, radius, spacing)}
+          />
+        </div>
+      </div>
 
       {/* Gap */}
       <SelectInput

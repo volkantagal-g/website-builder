@@ -6,6 +6,7 @@ interface StylePanelProps {
   palette: Record<string, string>;
   radius: Record<string, string>;
   spacing: Record<string, string>;
+  typography?: Record<string, any>;
   selectedComponent: ComponentMetadata | null;
   componentId?: string;
   canvasData?: any;

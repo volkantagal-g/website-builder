@@ -2,6 +2,54 @@ const CSS_SIZE_OPTIONS = [
   'auto', 'fit-content', 'max-content', 'min-content', '-webkit-fill-available', 'inherit', 'initial' ,'revert', 'revert-layer' ,'unset'
 ];
 
+// Palette'den color değerlerini al
+export const getColorOptionsFromPalette = (palette: Record<string, string>) => {
+  const baseOptions = ['transparent', 'inherit', 'initial', 'unset'];
+  const paletteColors = Object.values(palette).filter(color => 
+    color && typeof color === 'string' && color.startsWith('#')
+  );
+  return [...baseOptions, ...paletteColors];
+};
+
+// Typography'den font size değerlerini al
+export const getFontSizeOptionsFromTypography = (typography: Record<string, any>) => {
+  const baseOptions = [
+    'xx-small', 'x-small', 'small', 'medium', 'large', 'x-large', 'xx-large',
+    'smaller', 'larger', 'inherit', 'initial', 'unset'
+  ];
+  
+  const typographyFontSizes: string[] = [];
+  
+  // Typography objesini recursive olarak tarayarak font size değerlerini bul
+  const extractFontSizes = (obj: any) => {
+    if (typeof obj === 'string') {
+      // String değerler içinde px, rem, em içerenleri al
+      if (obj.includes('px') || obj.includes('rem') || obj.includes('em')) {
+        typographyFontSizes.push(obj);
+      }
+    } else if (typeof obj === 'object' && obj !== null) {
+      // Obje ise içindeki değerleri recursive olarak kontrol et
+      Object.values(obj).forEach(extractFontSizes);
+    }
+  };
+  
+  // Typography'den font size değerlerini çıkar
+  Object.values(typography).forEach(extractFontSizes);
+  
+  // Duplicate'leri kaldır ve sırala
+  const uniqueFontSizes = [...new Set(typographyFontSizes)].sort((a, b) => {
+    // Numeric değerleri sırala (px, rem, em)
+    const aNum = parseFloat(a);
+    const bNum = parseFloat(b);
+    if (!isNaN(aNum) && !isNaN(bNum)) {
+      return aNum - bNum;
+    }
+    return a.localeCompare(b);
+  });
+  
+  return [...baseOptions, ...uniqueFontSizes];
+};
+
 export const CSS_PROPERTY_OPTIONS = {
   display: [
     'block', 'inline', 'inline-block', 'flex', 'inline-flex', 
@@ -16,13 +64,7 @@ export const CSS_PROPERTY_OPTIONS = {
   maxWidth: CSS_SIZE_OPTIONS,
   maxHeight: CSS_SIZE_OPTIONS,
   
-  fontSize: [
-    'xx-small', 'x-small', 'small', 'medium', 'large', 'x-large', 'xx-large',
-    'smaller', 'larger', 'inherit', 'initial', 'unset',
-    '8px', '10px', '12px', '14px', '16px', '18px', '20px', '24px', '28px', '32px', '36px', '48px',
-    '0.5rem', '0.75rem', '1rem', '1.25rem', '1.5rem', '2rem', '2.5rem', '3rem',
-    '0.5em', '0.75em', '1em', '1.25em', '1.5em', '2em', '2.5em', '3em'
-  ],
+  fontSize: [], // Will be populated from typography
   
   fontWeight: [
     'normal', 'bold', 'bolder', 'lighter', 'inherit', 'initial', 'unset',
@@ -52,20 +94,8 @@ export const CSS_PROPERTY_OPTIONS = {
     '4px 8px', '8px 16px', '16px 24px', '8px 16px 24px 32px', 'auto'
   ],
   
-  backgroundColor: [
-    'transparent', 'inherit', 'initial', 'unset',
-    '#ffffff', '#f8f9fa', '#e9ecef', '#dee2e6', '#ced4da', '#adb5bd',
-    '#6c757d', '#495057', '#343a40', '#212529', '#000000',
-    '#6b3ff7', '#28a745', '#ffc107', '#dc3545', '#6f42c1', '#fd7e14',
-    '#20c997', '#17a2b8', '#6c757d', '#e83e8c'
-  ],
-  
-  color: [
-    'inherit', 'initial', 'unset',
-    '#000000', '#212529', '#343a40', '#495057', '#6c757d', '#adb5bd',
-    '#ced4da', '#dee2e6', '#e9ecef', '#f8f9fa', '#ffffff',
-    '#6b3ff7', '#28a745', '#ffc107', '#dc3545', '#6f42c1', '#fd7e14'
-  ],
+  backgroundColor: [], // Will be populated from palette
+  color: [], // Will be populated from palette
   
   justifyContent: [
     'flex-start', 'flex-end', 'center', 'space-between', 'space-around', 
@@ -83,13 +113,26 @@ export const CSS_PROPERTY_DEFAULTS = {
   fontWeight: 'normal',
   textAlign: 'left',
   border: '1px solid #ccc',
-  borderRadius: '4px',
+  borderRadius: '0',
   padding: '16px',
   margin: '0',
   backgroundColor: 'transparent',
   color: '#333333',
   justifyContent: 'flex-start'
 } as const;
+
+// CSS_PROPERTY_OPTIONS'ı palette ve typography ile güncelle
+export const getCSSPropertyOptions = (palette: Record<string, string>, typography: Record<string, any>) => {
+  const colorOptions = getColorOptionsFromPalette(palette);
+  const fontSizeOptions = getFontSizeOptionsFromTypography(typography);
+  
+  return {
+    ...CSS_PROPERTY_OPTIONS,
+    backgroundColor: colorOptions,
+    color: colorOptions,
+    fontSize: fontSizeOptions
+  };
+};
 
 export type CSSPropertyName = keyof typeof CSS_PROPERTY_OPTIONS;
 export type CSSPropertyValue = string;

@@ -151,6 +151,14 @@ export const getComponentLibrary = (componentName: string): string => {
 };
 
 /**
+ * Component'in container olup olmadığını belirle
+ */
+export const isContainerComponent = (componentName: string): boolean => {
+  const containerComponents = ['Div', 'Form'];
+  return containerComponents.includes(componentName);
+};
+
+/**
  * Style değerlerini al (önce style objesinden, sonra direkt props'lardan)
  */
 export const getStyleValue = (processedProps: any, key: string): any => {
@@ -183,15 +191,12 @@ export const combineStyleProperties = (processedProps: any): CSSProperties => {
   
   // Diğer CSS property'leri ekle
   const cssProps = ['display', 'width', 'height', 'maxWidth', 'maxHeight', 'minWidth', 'minHeight', 
-                   'justifyContent', 'backgroundColor', 'border', 'borderRadius', 'padding', 'margin'];
+                   'justifyContent', 'backgroundColor', 'border', 'borderRadius', 'padding', 'margin',
+                   'position', 'top', 'left', 'right', 'bottom', 'zIndex'];
   
   cssProps.forEach(prop => {
     if (processedProps[prop]) {
-      if (prop === 'display' || prop === 'justifyContent') {
-        (combinedStyle as any)[prop] = processedProps[prop];
-      } else {
-        (combinedStyle as any)[prop] = processedProps[prop];
-      }
+      (combinedStyle as any)[prop] = processedProps[prop];
     }
   });
   

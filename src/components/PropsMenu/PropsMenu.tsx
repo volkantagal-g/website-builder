@@ -15,6 +15,7 @@ export interface PropsMenuProps {
   palette?: Record<string, string>; // Pinnate palette CSS variables
   radius?: Record<string, string>; // Pinnate radius CSS variables
   spacing?: Record<string, string>; // Pinnate spacing CSS variables
+  typography?: Record<string, any>; // Pinnate typography CSS variables
   onComponentMove?: (dragId: string, targetId: string, position: 'before' | 'after' | 'inside') => void; // Component taşıma için
   onComponentHover?: (componentId: string | undefined) => void; // Component hover için
   onComponentSelect?: (componentId: string) => void; // Component seçimi için
@@ -28,6 +29,7 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
   palette = {},
   radius = {},
   spacing = {},
+  typography = {},
   onComponentMove,
   onComponentHover,
   onComponentSelect
@@ -442,12 +444,14 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
     });
   };
 
-  const renderPropInput = (propName: string, propType: string | { type: string; options?: string[] }, currentValue: any) => {
+  const renderPropInput = (propName: string, propType: string | { type: string; options?: string[] }, currentValue: unknown) => {
     return PropInputFactory.createInput({
       propName,
       propType,
       currentValue: localProps[propName] ?? currentValue,
-      onChange: handlePropChange
+      onChange: handlePropChange,
+      palette: palette,
+      typography: typography
     });
   };
 
@@ -771,6 +775,7 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
               palette={palette} 
               radius={radius}
               spacing={spacing}
+              typography={typography}
               selectedComponent={selectedComponent} 
               componentId={componentId} 
               canvasData={canvasData}

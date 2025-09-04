@@ -5,7 +5,7 @@ import { BORDER_WIDTH_OPTIONS } from '../constants';
 import { ColorOption, getValueFromCSSVar } from '../utils';
 
 interface BorderTabProps {
-  localStyle: Record<string, any>;
+  localStyle: Record<string, string>;
   onStyleChange: (property: string, value: string) => void;
   colorOptions: ColorOption[];
   palette: Record<string, string>;
@@ -25,34 +25,39 @@ export const BorderTab: React.FC<BorderTabProps> = ({
 }) => {
   return (
     <div style={{ paddingTop: '8px' }}>
-      {/* Border Width - Visual Controller */}
-      <VisualSpacingController
-        label="Border Width"
-        currentValues={{
-          top: localStyle.borderTopWidth,
-          right: localStyle.borderRightWidth,
-          bottom: localStyle.borderBottomWidth,
-          left: localStyle.borderLeftWidth
-        }}
-        onChange={(side, value) => {
-          const property = `border${side.charAt(0).toUpperCase() + side.slice(1)}Width`;
-          onStyleChange(property, value);
-        }}
-        spacingOptions={BORDER_WIDTH_OPTIONS}
-        getValueFromCSSVar={(value) => String(value || '')}
-      />
+      {/* Border Width and Style Side by Side */}
+      <div style={{ display: 'flex', gap: '20px', marginBottom: '20px' }}>
+        {/* Border Width Controller */}
+        <div style={{ flex: 1 }}>
+          <VisualSpacingController
+            label="Border Width"
+            currentValues={{
+              top: localStyle.borderTopWidth,
+              right: localStyle.borderRightWidth,
+              bottom: localStyle.borderBottomWidth,
+              left: localStyle.borderLeftWidth
+            }}
+            onChange={(side, value) => {
+              const property = `border${side.charAt(0).toUpperCase() + side.slice(1)}Width`;
+              onStyleChange(property, value);
+            }}
+            spacingOptions={BORDER_WIDTH_OPTIONS}
+            getValueFromCSSVar={(value) => String(value || '')}
+          />
+        </div>
 
-      {/* Border Style - Visual Controller */}
-      <div style={{ marginBottom: '20px' }}>
-        <label style={{
-          display: 'block',
-          fontSize: '14px',
-          fontWeight: '500',
-          color: '#333',
-          marginBottom: '12px'
-        }}>
-          Border Style
-        </label>
+        {/* Border Style Controller */}
+        <div style={{ flex: 1 }}>
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{
+              display: 'block',
+              fontSize: '14px',
+              fontWeight: '500',
+              color: '#333',
+              marginBottom: '12px'
+            }}>
+              Border Style
+            </label>
         
         {/* Global Border Style */}
         <div style={{ marginBottom: '12px' }}>
@@ -208,28 +213,37 @@ export const BorderTab: React.FC<BorderTabProps> = ({
             />
           </div>
         </div>
+          </div>
+        </div>
       </div>
 
-      {/* Border Color */}
-      <ColorSelect
-        label="Border Color"
-        value={localStyle.borderColor || ''}
-        onChange={(value) => onStyleChange('borderColor', value)}
-        placeholder="Select border color"
-        colorOptions={colorOptions}
-        palette={palette}
-        radius={radius}
-        spacing={spacing}
-      />
+      {/* Border Color and Radius Side by Side */}
+      <div style={{ display: 'flex', gap: '20px' }}>
+        {/* Border Color */}
+        <div style={{ flex: 1 }}>
+          <ColorSelect
+            label="Border Color"
+            value={localStyle.borderColor || ''}
+            onChange={(value) => onStyleChange('borderColor', value)}
+            placeholder="Select border color"
+            colorOptions={colorOptions}
+            palette={palette}
+            radius={radius}
+            spacing={spacing}
+          />
+        </div>
 
-      {/* Border Radius */}
-      <SelectInput
-        label="Border Radius"
-        value={getValueFromCSSVar(localStyle.borderRadius, palette, radius, spacing) || ''}
-        onChange={(value) => onStyleChange('borderRadius', value)}
-        placeholder="Select border radius"
-        options={radiusOptions}
-      />
+        {/* Border Radius */}
+        <div style={{ flex: 1 }}>
+          <SelectInput
+            label="Border Radius"
+            value={getValueFromCSSVar(localStyle.borderRadius, palette, radius, spacing) || ''}
+            onChange={(value) => onStyleChange('borderRadius', value)}
+            placeholder="Select border radius"
+            options={radiusOptions}
+          />
+        </div>
+      </div>
     </div>
   );
 };

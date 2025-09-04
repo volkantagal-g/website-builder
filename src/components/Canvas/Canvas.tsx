@@ -24,6 +24,7 @@ export const Canvas = forwardRef<HTMLDivElement, CanvasProps>(
       palette = {},
       radius = {},
       spacing = {},
+      typography = {},
       ...props
     },
     ref
@@ -155,6 +156,7 @@ export const Canvas = forwardRef<HTMLDivElement, CanvasProps>(
               palette={palette}
               radius={radius}
               spacing={spacing}
+              typography={typography}
               onComponentHover={(componentId) => canvasState.setHoveredComponentId(componentId || null)}
               onComponentSelect={(componentId) => canvasState.setSelectedComponentId(componentId)}
               onComponentMove={(dragId, targetId, position) => {

@@ -1,12 +1,13 @@
 import React from 'react';
-import { SelectInput, ManualSizeInput } from '../inputs';
+import { SelectInput, ManualSizeInput, PositionInputs } from '../inputs';
 import {
   DISPLAY_OPTIONS,
   JUSTIFY_CONTENT_OPTIONS,
   WIDTH_OPTIONS,
   HEIGHT_OPTIONS,
   MAX_WIDTH_OPTIONS,
-  MIN_WIDTH_OPTIONS
+  MIN_WIDTH_OPTIONS,
+  POSITION_OPTIONS
 } from '../constants';
 
 interface LayoutTabProps {
@@ -69,6 +70,22 @@ export const LayoutTab: React.FC<LayoutTabProps> = ({ localStyle, onStyleChange 
         onChange={(value) => onStyleChange('justifyContent', value)}
         placeholder="Select justify content"
         options={JUSTIFY_CONTENT_OPTIONS}
+      />
+
+      {/* Position */}
+      <SelectInput
+        label="Position"
+        value={localStyle.position || ''}
+        onChange={(value) => onStyleChange('position', value)}
+        placeholder="Select position"
+        options={POSITION_OPTIONS}
+      />
+
+      {/* Position Values - Only show when position is absolute, fixed, or sticky */}
+      <PositionInputs
+        localStyle={localStyle}
+        onStyleChange={onStyleChange}
+        position={localStyle.position || ''}
       />
     </div>
   );

@@ -1,24 +1,38 @@
 import React from 'react';
 import { TextInput, NumberInput, SelectInput, ToggleInput, ArrayInput } from './inputs';
-import { CSS_PROPERTY_OPTIONS, CSS_PROPERTY_DEFAULTS, CSSPropertyName } from '../../constants/css-properties';
+import { getCSSPropertyOptions, CSS_PROPERTY_DEFAULTS, CSSPropertyName } from '../../constants/css-properties';
 
 export interface PropInputFactoryProps {
   propName: string;
   propType: string | { type: string; options?: string[] };
-  currentValue: any;
-  onChange: (propName: string, value: any) => void;
+  currentValue: unknown;
+  onChange: (propName: string, value: unknown) => void;
+  palette?: Record<string, string>;
+  typography?: Record<string, any>;
 }
 
 export class PropInputFactory {
-  static createInput({ propName, propType, currentValue, onChange }: PropInputFactoryProps): React.ReactElement {
-    const value = currentValue ?? CSS_PROPERTY_DEFAULTS[propName as CSSPropertyName];
+  static createInput({ propName, propType, currentValue, onChange, palette = {}, typography = {} }: PropInputFactoryProps): React.ReactElement {
+    const cssOptions = getCSSPropertyOptions(palette, typography);
     
+    // Boolean type için özel kontrol (en önce yapılmalı)
+    if (typeof propType === 'string' && propType.toLowerCase() === 'boolean') {
+      const booleanValue = Boolean(currentValue);
+      return (
+        <ToggleInput
+          value={booleanValue}
+          onChange={(newValue) => onChange(propName, newValue)}
+        />
+      );
+    }
+
     // Select type için özel kontrol (object format: { type: "select", options: [...] })
     // Bu kontrol CSS property kontrolünden ÖNCE yapılmalı
     if (typeof propType === 'object' && propType.type === 'select' && propType.options) {
+      const value = String(currentValue ?? propType.options[0]);
       return (
         <SelectInput
-          value={value || propType.options[0]}
+          value={value}
           onChange={(newValue) => onChange(propName, newValue)}
           options={propType.options}
         />
@@ -42,9 +56,10 @@ export class PropInputFactory {
     // Union type için özel kontrol (örn: 'string | number')
     if (propTypeString.includes('|')) {
       const options = propTypeString.split('|').map(opt => opt.trim());
+      const value = String(currentValue ?? options[0]);
       return (
         <SelectInput
-          value={value || options[0]}
+          value={value}
           onChange={(newValue) => onChange(propName, newValue)}
           options={options}
         />
@@ -52,24 +67,27 @@ export class PropInputFactory {
     }
 
     // CSS property için özel kontrol (select type'dan SONRA)
-    if (this.isCSSProperty(propName)) {
-      return this.createCSSPropertyInput(propName, value, onChange);
+    if (this.isCSSProperty(propName, cssOptions)) {
+      const value = String(currentValue ?? CSS_PROPERTY_DEFAULTS[propName as CSSPropertyName]);
+      return this.createCSSPropertyInput(propName, value, onChange, cssOptions);
     }
 
     // Temel type'lar için
+    const value = String(currentValue ?? '');
     return this.createBasicTypeInput(propTypeString, value, onChange, propName);
   }
 
-  private static isCSSProperty(propName: string): propName is CSSPropertyName {
-    return propName in CSS_PROPERTY_OPTIONS;
+  private static isCSSProperty(propName: string, cssOptions: Record<string, readonly string[]>): propName is CSSPropertyName {
+    return propName in cssOptions;
   }
 
   private static createCSSPropertyInput(
     propName: CSSPropertyName, 
     value: string, 
-    onChange: (propName: string, value: any) => void
+    onChange: (propName: string, value: unknown) => void,
+    cssOptions: Record<string, readonly string[]>
   ): React.ReactElement {
-    const options = CSS_PROPERTY_OPTIONS[propName] as unknown as string[];
+    const options = cssOptions[propName] as unknown as string[];
     const defaultValue = CSS_PROPERTY_DEFAULTS[propName];
     
     return (
@@ -83,8 +101,8 @@ export class PropInputFactory {
 
   private static createBasicTypeInput(
     propType: string, 
-    value: any, 
-    onChange: (propName: string, value: any) => void,
+    value: string, 
+    onChange: (propName: string, value: unknown) => void,
     propName: string
   ): React.ReactElement {
     switch (propType.toLowerCase()) {
@@ -103,14 +121,6 @@ export class PropInputFactory {
             value={value || ''}
             onChange={(newValue) => onChange(propName, newValue)}
             placeholder={`Enter ${propName}`}
-          />
-        );
-
-      case 'boolean':
-        return (
-          <ToggleInput
-            value={value || false}
-            onChange={(newValue) => onChange(propName, newValue)}
           />
         );
 
