@@ -1,5 +1,5 @@
 import React from 'react';
-import { SelectInput } from '../inputs';
+import { SelectInput, ManualSizeInput } from '../inputs';
 import {
   DISPLAY_OPTIONS,
   JUSTIFY_CONTENT_OPTIONS,
@@ -10,7 +10,7 @@ import {
 } from '../constants';
 
 interface LayoutTabProps {
-  localStyle: Record<string, any>;
+  localStyle: Record<string, string>;
   onStyleChange: (property: string, value: string) => void;
 }
 
@@ -26,6 +26,42 @@ export const LayoutTab: React.FC<LayoutTabProps> = ({ localStyle, onStyleChange 
         options={DISPLAY_OPTIONS}
       />
 
+      {/* Width */}
+      <ManualSizeInput
+        label="Width"
+        value={localStyle.width || ''}
+        onChange={(value) => onStyleChange('width', value)}
+        placeholder="Enter width"
+        options={WIDTH_OPTIONS}
+      />
+
+      {/* Min Width */}
+      <ManualSizeInput
+        label="Min Width"
+        value={localStyle.minWidth || ''}
+        onChange={(value) => onStyleChange('minWidth', value)}
+        placeholder="Enter min width"
+        options={MIN_WIDTH_OPTIONS}
+      />
+
+      {/* Max Width */}
+      <ManualSizeInput
+        label="Max Width"
+        value={localStyle.maxWidth || ''}
+        onChange={(value) => onStyleChange('maxWidth', value)}
+        placeholder="Enter max width"
+        options={MAX_WIDTH_OPTIONS}
+      />
+
+      {/* Height */}
+      <ManualSizeInput
+        label="Height"
+        value={localStyle.height || ''}
+        onChange={(value) => onStyleChange('height', value)}
+        placeholder="Enter height"
+        options={HEIGHT_OPTIONS}
+      />
+
       {/* Justify Content */}
       <SelectInput
         label="Justify Content"
@@ -33,42 +69,6 @@ export const LayoutTab: React.FC<LayoutTabProps> = ({ localStyle, onStyleChange 
         onChange={(value) => onStyleChange('justifyContent', value)}
         placeholder="Select justify content"
         options={JUSTIFY_CONTENT_OPTIONS}
-      />
-
-      {/* Width */}
-      <SelectInput
-        label="Width"
-        value={localStyle.width || ''}
-        onChange={(value) => onStyleChange('width', value)}
-        placeholder="Select width"
-        options={WIDTH_OPTIONS}
-      />
-
-      {/* Height */}
-      <SelectInput
-        label="Height"
-        value={localStyle.height || ''}
-        onChange={(value) => onStyleChange('height', value)}
-        placeholder="Select height"
-        options={HEIGHT_OPTIONS}
-      />
-
-      {/* Max Width */}
-      <SelectInput
-        label="Max Width"
-        value={localStyle.maxWidth || ''}
-        onChange={(value) => onStyleChange('maxWidth', value)}
-        placeholder="Select max width"
-        options={MAX_WIDTH_OPTIONS}
-      />
-
-      {/* Min Width */}
-      <SelectInput
-        label="Min Width"
-        value={localStyle.minWidth || ''}
-        onChange={(value) => onStyleChange('minWidth', value)}
-        placeholder="Select min width"
-        options={MIN_WIDTH_OPTIONS}
       />
     </div>
   );

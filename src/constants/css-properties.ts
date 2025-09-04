@@ -1,3 +1,7 @@
+const CSS_SIZE_OPTIONS = [
+  'auto', 'fit-content', 'max-content', 'min-content', '-webkit-fill-available', 'inherit', 'initial' ,'revert', 'revert-layer' ,'unset'
+];
+
 export const CSS_PROPERTY_OPTIONS = {
   display: [
     'block', 'inline', 'inline-block', 'flex', 'inline-flex', 
@@ -7,45 +11,10 @@ export const CSS_PROPERTY_OPTIONS = {
     'ruby-base', 'ruby-text', 'ruby-base-container', 'ruby-text-container'
   ],
   
-  width: [
-    'auto', 'fit-content', 'max-content', 'min-content', 'revert', 'unset',
-    '0', '1px', '2px', '5px', '10px', '20px', '50px', '100px', '200px', '500px',
-    '1%', '5%', '10%', '25%', '50%', '75%', '100%',
-    '1em', '2em', '3em', '5em', '10em',
-    '1rem', '2rem', '3rem', '5rem', '10rem',
-    '1vw', '2vw', '5vw', '10vw', '25vw', '50vw', '100vw',
-    '1ch', '2ch', '5ch', '10ch', '20ch', '50ch'
-  ],
-  
-  height: [
-    'auto', 'fit-content', 'max-content', 'min-content', 'revert', 'unset',
-    '0', '1px', '2px', '5px', '10px', '20px', '50px', '100px', '200px', '500px',
-    '1%', '5%', '10%', '25%', '50%', '75%', '100%',
-    '1em', '2em', '3em', '5em', '10em',
-    '1rem', '2rem', '3rem', '5rem', '10rem',
-    '1vh', '2vh', '5vh', '10vh', '25vh', '50vh', '100vh',
-    '1ch', '2ch', '5ch', '10ch', '20ch', '50ch'
-  ],
-  
-  maxWidth: [
-    'none', 'max-content', 'min-content', 'fit-content', 'revert', 'unset',
-    '0', '1px', '2px', '5px', '10px', '20px', '50px', '100px', '200px', '500px',
-    '1%', '5%', '10%', '25%', '50%', '75%', '100%',
-    '1em', '2em', '3em', '5em', '10em',
-    '1rem', '2rem', '3rem', '5rem', '10rem',
-    '1vw', '2vw', '5vw', '10vw', '25vw', '50vw', '100vw',
-    '1ch', '2ch', '5ch', '10ch', '20ch', '50ch'
-  ],
-  
-  maxHeight: [
-    'none', 'max-content', 'min-content', 'fit-content', 'revert', 'unset',
-    '0', '1px', '2px', '5px', '10px', '20px', '50px', '100px', '200px', '500px',
-    '1%', '5%', '10%', '25%', '50%', '75%', '100%',
-    '1em', '2em', '3em', '5em', '10em',
-    '1rem', '2rem', '3rem', '5rem', '10rem',
-    '1vh', '2vh', '5vh', '10vh', '25vh', '50vh', '100vh',
-    '1ch', '2ch', '5ch', '10ch', '20ch', '50ch'
-  ],
+  width: CSS_SIZE_OPTIONS,
+  height: CSS_SIZE_OPTIONS,
+  maxWidth: CSS_SIZE_OPTIONS,
+  maxHeight: CSS_SIZE_OPTIONS,
   
   fontSize: [
     'xx-small', 'x-small', 'small', 'medium', 'large', 'x-large', 'xx-large',
@@ -65,8 +34,7 @@ export const CSS_PROPERTY_OPTIONS = {
   ],
   
   border: [
-    'none', 'solid', 'dashed', 'dotted', 'double', 'groove', 'ridge', 'inset', 'outset',
-    '1px solid #ccc', '2px solid #333', '1px dashed #999', '3px solid #6b3ff7'
+    'none', 'solid', 'dashed', 'dotted', 'double', 'groove', 'ridge', 'inset', 'outset'
   ],
   
   borderRadius: [

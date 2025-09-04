@@ -10,8 +10,8 @@ interface StylePanelProps {
   spacing: Record<string, string>;
   selectedComponent: ComponentMetadata | null;
   componentId?: string;
-  canvasData?: any;
-  onPropsChange: (componentId: string, newProps: Record<string, any>) => void;
+  canvasData?: Record<string, unknown>;
+  onPropsChange: (componentId: string, newProps: Record<string, unknown>) => void;
 }
 
 export const StylePanel: React.FC<StylePanelProps> = ({
@@ -144,31 +144,58 @@ export const StylePanel: React.FC<StylePanelProps> = ({
         ))}
       </div>
 
-      {/* Tab Content */}
-      {renderTabContent()}
+      {/* Two Column Layout */}
+      <div style={{ 
+        display: 'flex', 
+        gap: '20px', 
+        minHeight: '400px',
+        flexDirection: 'row'
+      }}>
+        {/* Left Column - Tab Content */}
+        <div style={{ 
+          flex: 1, 
+          minWidth: 0,
+          maxWidth: 'calc(100% - 320px)'
+        }}>
+          {renderTabContent()}
+        </div>
 
-      {/* Current Style Preview */}
-      <div style={{ marginTop: '20px', padding: '16px', backgroundColor: '#f8f9fa', borderRadius: '8px' }}>
-        <h4 style={{
-          margin: '0 0 12px 0',
-          fontSize: '14px',
-          fontWeight: '600',
-          color: '#333'
+        {/* Right Column - Current Style Preview */}
+        <div style={{ 
+          flex: '0 0 300px', 
+          padding: '16px', 
+          backgroundColor: '#f8f9fa', 
+          borderRadius: '8px',
+          height: 'fit-content',
+          position: 'sticky',
+          top: '80px',
+          maxHeight: 'calc(100vh - 120px)',
+          overflow: 'auto'
         }}>
-          Current Style
-        </h4>
-        <pre style={{
-          fontSize: '12px',
-          color: '#666',
-          backgroundColor: '#fff',
-          padding: '12px',
-          borderRadius: '4px',
-          border: '1px solid #e9ecef',
-          overflow: 'auto',
-          maxHeight: '200px'
-        }}>
-          {JSON.stringify(localStyle, null, 2)}
-        </pre>
+          <h4 style={{
+            margin: '0 0 12px 0',
+            fontSize: '14px',
+            fontWeight: '600',
+            color: '#333'
+          }}>
+            Current Style
+          </h4>
+          <pre style={{
+            fontSize: '12px',
+            color: '#666',
+            backgroundColor: '#fff',
+            padding: '12px',
+            borderRadius: '4px',
+            border: '1px solid #e9ecef',
+            overflow: 'auto',
+            maxHeight: '250px',
+            margin: 0,
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-word'
+          }}>
+            {JSON.stringify(localStyle, null, 2)}
+          </pre>
+        </div>
       </div>
     </div>
   );
