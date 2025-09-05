@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import React, { useState, useEffect } from 'react';
 import { FiMonitor, FiTablet, FiSmartphone, FiSettings } from 'react-icons/fi';
 
@@ -165,6 +167,7 @@ export const DeviceSelector: React.FC<DeviceSelectorProps> = ({
       gap: '8px',
       backgroundColor: '#f8f9fa',
       padding: '8px 12px',
+      opacity: 0,
       //borderRadius: '8px',
       //border: '1px solid #e9ecef',
       boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
@@ -183,7 +186,7 @@ export const DeviceSelector: React.FC<DeviceSelectorProps> = ({
       </div>
       
       {/* Device Selector */}
-      <select
+      {/*<select
         value={selectedDevice.id}
         onChange={(e) => handleDeviceChange(e.target.value)}
         style={{
@@ -212,7 +215,7 @@ export const DeviceSelector: React.FC<DeviceSelectorProps> = ({
             {getDeviceDisplayName(device)}
           </option>
         ))}
-      </select>
+      </select>*/}
       
       {/* Custom Size Inputs */}
       {isCustomMode && (

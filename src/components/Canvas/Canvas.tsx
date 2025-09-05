@@ -8,7 +8,7 @@ import { ZoomControl } from '../ZoomControl';
 import { ZOOM_CONSTANTS } from '../../constants/zoom';
 import { STORAGE_KEYS } from '../../constants/storage';
 import { ApiProvider, useApi } from '../../context/ApiContext';
-import { BreakpointProvider } from '../../context/BreakpointContext';
+import { BreakpointProvider, useBreakpointContext } from '../../context/BreakpointContext';
 import { CanvasProps, CanvasComponent, ComponentMetadata } from '../../types/canvas';
 import { DevicePreset } from '../DeviceSelector/DeviceSelector';
 import { useCanvas } from '../../hooks/useCanvas';
@@ -40,6 +40,21 @@ const CanvasContent: React.FC<{
   const canvasState = useCanvas(flattenedComponents);
   useCanvasRestore(flattenedComponents, canvasState.setCanvasComponents);
   
+  // Breakpoint context
+  const { selectedBreakpoint } = useBreakpointContext();
+  
+  // Breakpoint değiştiğinde device'ı güncelle
+  useEffect(() => {
+    setCurrentDevice({
+      id: selectedBreakpoint.id,
+      name: selectedBreakpoint.name,
+      width: selectedBreakpoint.width,
+      height: selectedBreakpoint.height,
+      icon: <></>,
+      category: selectedBreakpoint.category
+    });
+  }, [selectedBreakpoint]);
+  
   // Preview state
   const [isPreview, setIsPreview] = useState(false);
   
@@ -52,29 +67,16 @@ const CanvasContent: React.FC<{
   // PropsMenu height state
   const [propsMenuHeight, setPropsMenuHeight] = useState(0);
   
-  // Device state - localStorage'dan yükle
+  // Device state - breakpoint'e göre ayarla
   const [currentDevice, setCurrentDevice] = useState<DevicePreset>(() => {
-    try {
-      const savedDevice = localStorage.getItem(STORAGE_KEYS.CANVAS_DEVICE);
-      if (savedDevice) {
-        const parsed = JSON.parse(savedDevice);
-        return {
-          ...parsed,
-          icon: <></> // Icon'u her zaman boş olarak ayarla
-        };
-      }
-    } catch (error) {
-      console.error('Error loading device from localStorage:', error);
-    }
-    
-    // Default device
+    // Breakpoint'e göre device oluştur
     return {
-      id: 'iphone-11',
-      name: 'iPhone 11',
-      width: 375,
-      height: 812,
+      id: selectedBreakpoint.id,
+      name: selectedBreakpoint.name,
+      width: selectedBreakpoint.width,
+      height: selectedBreakpoint.height,
       icon: <></>,
-      category: 'mobile'
+      category: selectedBreakpoint.category
     };
   });
   
@@ -188,13 +190,13 @@ const CanvasContent: React.FC<{
   };
 
   const canvasStyle: CSSProperties = {
-    width: `${currentDevice.width}px`,
-    height: `${currentDevice.height}px`,
+    width: `${selectedBreakpoint.width}px`,
+    height: `${selectedBreakpoint.height}px`,
     backgroundColor: '#ffffff',
     overflow: 'auto',
     transform: `scale(${zoom})`,
     transformOrigin: 'center top',
-    transition: 'transform 0.2s ease',
+    transition: 'transform 0.2s ease, width 0.3s ease, height 0.3s ease',
     border: '1px solid #ddd',
     borderRadius: '8px',
     boxShadow: '0 4px 12px rgba(0,0,0,0.1)',

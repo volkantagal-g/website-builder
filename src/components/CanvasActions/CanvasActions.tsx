@@ -176,10 +176,10 @@ export const CanvasActions: React.FC<CanvasActionsProps> = ({
       top: 0,
       zIndex: 1,
     }}>
-      <DeviceSelector 
+      {<DeviceSelector 
         onDeviceChange={handleDeviceChange}
         currentDevice={currentDevice}
-      />
+      />}
       
       <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
         {/* Version Dropdown */}

@@ -44,6 +44,7 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
   const [previousHeight, setPreviousHeight] = useState(INITIAL_PROPS_MENU_HEIGHT);
   const [isResizing, setIsResizing] = useState(false);
   const [activeTab, setActiveTab] = useState('properties'); // Yeni: active tab
+  const [showBreakpointMenu, setShowBreakpointMenu] = useState(false); // Breakpoint menüsü görünürlüğü
   const [draggedComponentId, setDraggedComponentId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [dragPosition, setDragPosition] = useState<'before' | 'after' | 'inside' | null>(null);
@@ -670,24 +671,25 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
         </div>
       </div>
 
-      {/* Breakpoint Selector */}
-      <div style={{
-        height: '50px',
-        backgroundColor: '#f8f9fa',
-        borderBottom: '1px solid #e9ecef',
-        display: 'flex',
-        alignItems: 'center',
-        padding: '0 20px',
-        flexShrink: 0,
-      }}>
+      {/* Breakpoint Selector - Hidden by default */}
+      {showBreakpointMenu && (
+        <div style={{
+          height: '40px',
+          backgroundColor: '#f8f9fa',
+          borderBottom: '1px solid #e9ecef',
+          display: 'flex',
+          alignItems: 'center',
+          padding: '0 16px',
+          flexShrink: 0,
+        }}>
         <div style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '8px',
+          gap: '6px',
         }}>
-          <FiMonitor size={16} color="#666" />
+          <FiMonitor size={14} color="#666" />
           <span style={{
-            fontSize: '12px',
+            fontSize: '10px',
             fontWeight: '600',
             color: '#666',
             textTransform: 'uppercase',
@@ -700,13 +702,13 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '4px',
-              padding: '4px 8px',
+              gap: '3px',
+              padding: '3px 6px',
               backgroundColor: isAutoMode ? '#28a745' : '#6c757d',
               color: 'white',
               border: 'none',
-              borderRadius: '4px',
-              fontSize: '10px',
+              borderRadius: '3px',
+              fontSize: '9px',
               fontWeight: '600',
               cursor: 'pointer',
               transition: 'all 0.2s ease',
@@ -726,13 +728,13 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '4px',
-                padding: '4px 8px',
+                gap: '3px',
+                padding: '3px 6px',
                 backgroundColor: '#17a2b8',
                 color: 'white',
                 border: 'none',
-                borderRadius: '4px',
-                fontSize: '10px',
+                borderRadius: '3px',
+                fontSize: '9px',
                 fontWeight: '600',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
@@ -744,12 +746,12 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
                 e.currentTarget.style.backgroundColor = '#17a2b8';
               }}
             >
-              RESET TO AUTO
+              RESET
             </button>
           )}
           <div style={{
             display: 'flex',
-            gap: '4px',
+            gap: '3px',
           }}>
             {BREAKPOINTS.map((breakpoint) => (
               <button
@@ -762,13 +764,13 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '4px',
-                  padding: '6px 12px',
+                  gap: '3px',
+                  padding: '4px 8px',
                   backgroundColor: selectedBreakpoint.id === breakpoint.id ? '#6b3ff7' : '#ffffff',
                   color: selectedBreakpoint.id === breakpoint.id ? '#ffffff' : '#666',
                   border: `1px solid ${selectedBreakpoint.id === breakpoint.id ? '#6b3ff7' : '#e9ecef'}`,
-                  borderRadius: '4px',
-                  fontSize: '12px',
+                  borderRadius: '3px',
+                  fontSize: '10px',
                   fontWeight: '500',
                   cursor: isAutoMode ? 'not-allowed' : 'pointer',
                   opacity: isAutoMode ? 0.6 : 1,
@@ -789,7 +791,7 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
               >
                 <span>{breakpoint.icon}</span>
                 <span>{breakpoint.name}</span>
-                <span style={{ fontSize: '10px', opacity: 0.7 }}>
+                <span style={{ fontSize: '8px', opacity: 0.7 }}>
                   {breakpoint.width}×{breakpoint.height}
                 </span>
               </button>
@@ -797,6 +799,7 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
           </div>
         </div>
       </div>
+      )}
 
       {/* Tab Menu - Chrome DevTools Style */}
       <div style={{
@@ -910,6 +913,39 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
             API Endpoints
           </button>
         </div>
+        
+        {/* Breakpoint Toggle Button */}
+        <button
+          onClick={() => setShowBreakpointMenu(!showBreakpointMenu)}
+          style={{
+            height: '100%',
+            padding: '0 12px',
+            backgroundColor: showBreakpointMenu ? '#6b3ff7' : 'transparent',
+            border: 'none',
+            color: showBreakpointMenu ? '#ffffff' : '#666',
+            fontSize: '13px',
+            fontWeight: '500',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            borderRadius: '0',
+            marginLeft: 'auto',
+          }}
+          onMouseEnter={(e) => {
+            if (!showBreakpointMenu) {
+              e.currentTarget.style.backgroundColor = '#f8f9fa';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!showBreakpointMenu) {
+              e.currentTarget.style.backgroundColor = 'transparent';
+            }
+          }}
+        >
+          <FiMonitor size={14} />
+        </button>
       </div>
 
 
