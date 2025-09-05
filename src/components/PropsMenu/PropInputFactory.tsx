@@ -1,5 +1,6 @@
 import React from 'react';
-import { TextInput, NumberInput, SelectInput, ToggleInput, ArrayInput } from './inputs';
+import { TextInput, NumberInput, SelectInput, ArrayInput } from './inputs';
+import { BooleanWithBinding } from './inputs/BooleanWithBinding';
 import { getCSSPropertyOptions, CSS_PROPERTY_DEFAULTS, CSSPropertyName } from '../../constants/css-properties';
 
 export interface PropInputFactoryProps {
@@ -16,13 +17,16 @@ export class PropInputFactory {
   static createInput({ propName, propType, currentValue, onChange, palette = {}, typography = {}, initialValue }: PropInputFactoryProps): React.ReactElement {
     const cssOptions = getCSSPropertyOptions(palette, typography);
     
+    // Debug log for propType
+    console.log('🔍 PropInputFactory:', { propName, propType, currentValue, propTypeString: typeof propType === 'string' ? propType : propType.type });
+    
     // Boolean type için özel kontrol (en önce yapılmalı)
     if (typeof propType === 'string' && propType.toLowerCase() === 'boolean') {
-      const booleanValue = Boolean(currentValue);
       return (
-        <ToggleInput
-          value={booleanValue}
+        <BooleanWithBinding
+          value={currentValue as boolean | string}
           onChange={(newValue) => onChange(propName, newValue)}
+          placeholder={`Enter binding (e.g., {{restaurant.isVisible}})`}
         />
       );
     }

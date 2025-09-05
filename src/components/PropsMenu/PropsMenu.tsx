@@ -529,7 +529,7 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
   };
 
 
-  // Get nested object properties recursively - generic solution using actual data
+  // Get nested object properties recursively - use metadata for prop types
   const getNestedObjectProperties = (obj: any, prefix = ''): Array<{name: string, type: string, path: string}> => {
     const result: Array<{name: string, type: string, path: string}> = [];
     
@@ -545,17 +545,23 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
         // Recursively process nested objects
         result.push(...getNestedObjectProperties(value, fullPath));
       } else {
-        // Determine type based on actual value, not metadata
+        // Use metadata prop type if available, otherwise determine from value
         let type = 'string'; // Default to string for most inputs
         
-        if (Array.isArray(value)) {
-          type = 'array';
-        } else if (typeof value === 'boolean') {
-          type = 'boolean';
-        } else if (typeof value === 'number') {
-          type = 'number';
-        } else if (value === null || value === undefined) {
-          type = 'string'; // Treat null/undefined as string for input purposes
+        // Check if we have metadata for this prop
+        if (selectedComponent?.props && selectedComponent.props[key]) {
+          type = selectedComponent.props[key];
+        } else {
+          // Fallback to value-based type detection
+          if (Array.isArray(value)) {
+            type = 'array';
+          } else if (typeof value === 'boolean') {
+            type = 'boolean';
+          } else if (typeof value === 'number') {
+            type = 'number';
+          } else if (value === null || value === undefined) {
+            type = 'string'; // Treat null/undefined as string for input purposes
+          }
         }
         
         result.push({

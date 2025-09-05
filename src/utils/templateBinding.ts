@@ -7,6 +7,8 @@ import { ApiContextType } from '../types/api';
 
 export interface TemplateBindingOptions {
   getResponseData: ApiContextType['getResponseData'];
+  componentType?: string; // Component tipi (örn: 'switch')
+  propType?: string; // Prop tipi (örn: 'boolean')
 }
 
 /**
@@ -41,13 +43,21 @@ export const processTemplate = (
     
     try {
       const value = resolveDataPath(path, options.getResponseData);
+      console.log('🔍 Template binding:', { template, path, value, fullMatch });
       
       // Replace the template with the resolved value
       if (value !== undefined && value !== null) {
         result = result.replace(fullMatch, String(value));
+        console.log('✅ Template resolved:', { fullMatch, value, result });
       } else {
-        // Keep the template if value not found
-        console.warn(`Template binding: Value not found for path "${path}"`);
+        // Boolean prop'lar için değer bulunamazsa false gönder
+        if (options.propType === 'boolean') {
+          result = result.replace(fullMatch, 'false');
+          console.warn(`Template binding: Value not found for path "${path}", using false for boolean prop`);
+        } else {
+          // Diğer prop tipleri için template'i olduğu gibi bırak
+          console.warn(`Template binding: Value not found for path "${path}", keeping template`);
+        }
       }
     } catch (error) {
       console.error(`Template binding error for "${path}":`, error);
@@ -126,19 +136,22 @@ const convertType = (result: string, original: string): any => {
  */
 export const processComponentProps = (
   props: Record<string, any>,
-  options: TemplateBindingOptions
+  options: TemplateBindingOptions,
+  componentMetadata?: any
 ): Record<string, any> => {
   const processedProps: Record<string, any> = {};
 
   for (const [key, value] of Object.entries(props)) {
     if (typeof value === 'string') {
-      processedProps[key] = processTemplate(value, options);
+      // Prop tipini component metadata'sından al
+      const propType = componentMetadata?.props?.[key] || 'string';
+      processedProps[key] = processTemplate(value, { ...options, propType });
     } else if (Array.isArray(value)) {
       processedProps[key] = value.map(item => 
         typeof item === 'string' ? processTemplate(item, options) : item
       );
     } else if (value && typeof value === 'object') {
-      processedProps[key] = processComponentProps(value, options);
+      processedProps[key] = processComponentProps(value, options, componentMetadata);
     } else {
       processedProps[key] = value;
     }
