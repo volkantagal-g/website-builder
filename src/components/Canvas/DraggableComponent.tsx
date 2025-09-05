@@ -446,7 +446,7 @@ export const DraggableComponent: React.FC<DraggableComponentProps & { isPreview?
         width: componentWidth && typeof componentWidth === 'string' && componentWidth.includes('px') ? (parseInt(componentWidth) + 12 + 'px') : componentWidth || '100%',
         height: componentHeight && typeof componentHeight === 'string' && componentHeight.includes('px') ? (parseInt(componentHeight) + 12 + 'px') : componentHeight || 'auto',
         opacity: isDragging ? 0.5 : 1,
-        cursor: isPreview ? 'default' : 'move',
+        cursor: isPreview ? 'auto' : 'move',
         position: componentPosition || 'relative',
         ...(componentLeft && { left: componentLeft }),
         ...(componentRight && { right: componentRight }),

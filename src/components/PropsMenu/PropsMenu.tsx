@@ -19,6 +19,7 @@ export interface PropsMenuProps {
   onComponentMove?: (dragId: string, targetId: string, position: 'before' | 'after' | 'inside') => void; // Component taşıma için
   onComponentHover?: (componentId: string | undefined) => void; // Component hover için
   onComponentSelect?: (componentId: string) => void; // Component seçimi için
+  onHeightChange?: (height: number) => void; // Height değişikliği için callback
 }
 
 export const PropsMenu: React.FC<PropsMenuProps> = ({ 
@@ -32,7 +33,8 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
   typography = {},
   onComponentMove,
   onComponentHover,
-  onComponentSelect
+  onComponentSelect,
+  onHeightChange
 }) => {
   const [isMinimized, setIsMinimized] = useState(true); // Başlangıçta minimize
   const [localProps, setLocalProps] = useState<Record<string, any>>({});
@@ -145,6 +147,13 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
       setPreviousHeight(height);
     }
   }, [height, isResizing]);
+
+  // Height değiştiğinde parent'a bildir
+  React.useEffect(() => {
+    if (onHeightChange) {
+      onHeightChange(isMinimized ? 0 : height);
+    }
+  }, [height, isMinimized, onHeightChange]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();

@@ -45,6 +45,9 @@ const CanvasContent: React.FC<{
   // Zoom state
   const [zoom, setZoom] = useState(1);
   
+  // PropsMenu height state
+  const [propsMenuHeight, setPropsMenuHeight] = useState(0);
+  
   // Device state - localStorage'dan yükle
   const [currentDevice, setCurrentDevice] = useState<DevicePreset>(() => {
     try {
@@ -185,7 +188,7 @@ const CanvasContent: React.FC<{
   };
 
   return (
-    <div ref={ref} style={containerStyle} {...props} onClick={canvasState.handleCanvasClick}>
+    <div ref={ref} style={containerStyle} {...props}>
       {/* Canvas Actions Header */}
       <CanvasActions 
         canvasData={canvasState.canvasComponents}
@@ -204,16 +207,20 @@ const CanvasContent: React.FC<{
         minZoom={ZOOM_CONSTANTS.MIN_ZOOM}
         maxZoom={ZOOM_CONSTANTS.MAX_ZOOM}
         zoomStep={ZOOM_CONSTANTS.ZOOM_STEP}
+        propsMenuHeight={propsMenuHeight}
       />
 
-      <div style={{
-        flex: '1',
-        overflow: 'auto',
-        display: 'flex',
-        //alignItems: 'center',
-        justifyContent: 'center',
-        padding: '20px',
-      }}>
+      <div 
+        style={{
+          flex: '1',
+          overflow: 'auto',
+          display: 'flex',
+          //alignItems: 'center',
+          justifyContent: 'center',
+          padding: '20px',
+        }}
+        onClick={canvasState.handleCanvasClick}
+      >
         <div style={canvasStyle} data-canvas>
           <DropZone
             onDrop={canvasState.addComponent}
@@ -265,6 +272,7 @@ const CanvasContent: React.FC<{
         typography={typography}
         onComponentHover={(componentId) => canvasState.setHoveredComponentId(componentId || null)}
         onComponentSelect={(componentId) => canvasState.setSelectedComponentId(componentId)}
+        onHeightChange={setPropsMenuHeight}
         onComponentMove={(dragId, targetId, position) => {
           const moveComponentInTree = (components: CanvasComponent[]): CanvasComponent[] => {
             const findComponent = (comps: CanvasComponent[]): CanvasComponent | undefined => {

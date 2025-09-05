@@ -9,6 +9,7 @@ export interface ZoomControlProps {
   minZoom?: number;
   maxZoom?: number;
   zoomStep?: number;
+  propsMenuHeight?: number; // PropsMenu height'ı
 }
 
 export const ZoomControl: React.FC<ZoomControlProps> = ({
@@ -18,7 +19,8 @@ export const ZoomControl: React.FC<ZoomControlProps> = ({
   onZoomReset,
   minZoom = 0.25,
   maxZoom = 3,
-  zoomStep = 0.1
+  zoomStep = 0.1,
+  propsMenuHeight = 0
 }) => {
   const canZoomIn = zoom < maxZoom;
   const canZoomOut = zoom > minZoom;
@@ -26,10 +28,13 @@ export const ZoomControl: React.FC<ZoomControlProps> = ({
   // Zoom step bilgisini tooltip'te göster
   const zoomStepPercent = Math.round(zoomStep * 100);
 
+  // PropsMenu açıksa ZoomControl'ü daha yukarı çıkar
+  const bottomPosition = propsMenuHeight > 0 ? propsMenuHeight + 20 : 120;
+  
   return (
     <div style={{
       position: 'fixed',
-      bottom: '120px',
+      bottom: `${bottomPosition}px`,
       right: '60px',
       display: 'flex',
       alignItems: 'center',
