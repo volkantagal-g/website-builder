@@ -528,6 +528,55 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
     });
   };
 
+
+  // Get nested object properties recursively - generic solution using actual data
+  const getNestedObjectProperties = (obj: any, prefix = ''): Array<{name: string, type: string, path: string}> => {
+    const result: Array<{name: string, type: string, path: string}> = [];
+    
+    if (!obj || typeof obj !== 'object') {
+      return result;
+    }
+        
+    Object.keys(obj).forEach((key) => {
+      const value = obj[key];
+      const fullPath = prefix ? `${prefix}.${key}` : key;
+      
+      if (value && typeof value === 'object' && !Array.isArray(value)) {
+        // Recursively process nested objects
+        result.push(...getNestedObjectProperties(value, fullPath));
+      } else {
+        // Determine type based on actual value, not metadata
+        let type = 'string'; // Default to string for most inputs
+        
+        if (Array.isArray(value)) {
+          type = 'array';
+        } else if (typeof value === 'boolean') {
+          type = 'boolean';
+        } else if (typeof value === 'number') {
+          type = 'number';
+        } else if (value === null || value === undefined) {
+          type = 'string'; // Treat null/undefined as string for input purposes
+        }
+        
+        result.push({
+          name: key,
+          type: type,
+          path: fullPath
+        });
+      }
+    });
+    
+    return result;
+  };
+
+  // Get nested value from initialValues using dot notation path
+  const getNestedValue = (obj: any, path: string) => {
+    return path.split('.').reduce((current, key) => {
+      return current && current[key] !== undefined ? current[key] : null;
+    }, obj);
+  };
+
+
   if (isMinimized) {
     return (
       <div 
@@ -973,8 +1022,8 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                {Object.entries(selectedComponent.props).map(([propName, propType]) => (
-                  <div key={propName} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {getNestedObjectProperties(selectedComponent.initialValues || selectedComponent.props).map((prop) => (
+                  <div key={prop.path} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <label style={{
                       fontSize: '14px',
                       fontWeight: '500',
@@ -983,7 +1032,7 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
                       justifyContent: 'space-between',
                       alignItems: 'center',
                     }}>
-                      <span>{propName}</span>
+                      <span>{prop.path}</span>
                       <span style={{
                         fontSize: '12px',
                         color: '#666',
@@ -992,10 +1041,10 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
                         padding: '2px 6px',
                         borderRadius: '3px',
                       }}>
-                        {propType}
+                        {prop.type}
                       </span>
                     </label>
-                    {renderPropInput(propName, propType, selectedComponent.initialValues[propName])}
+                    {renderPropInput(prop.path, prop.type, getNestedValue(selectedComponent.initialValues, prop.path))}
                   </div>
                 ))}
               </div>
