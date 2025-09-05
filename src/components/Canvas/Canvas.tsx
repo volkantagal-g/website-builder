@@ -8,6 +8,7 @@ import { ZoomControl } from '../ZoomControl';
 import { ZOOM_CONSTANTS } from '../../constants/zoom';
 import { STORAGE_KEYS } from '../../constants/storage';
 import { ApiProvider, useApi } from '../../context/ApiContext';
+import { BreakpointProvider } from '../../context/BreakpointContext';
 import { CanvasProps, CanvasComponent, ComponentMetadata } from '../../types/canvas';
 import { DevicePreset } from '../DeviceSelector/DeviceSelector';
 import { useCanvas } from '../../hooks/useCanvas';
@@ -43,7 +44,10 @@ const CanvasContent: React.FC<{
   const [isPreview, setIsPreview] = useState(false);
   
   // Zoom state
-  const [zoom, setZoom] = useState(1);
+  const [zoom, setZoom] = useState(() => {
+    const savedZoom = localStorage.getItem(ZOOM_CONSTANTS.ZOOM_STORAGE_KEY);
+    return savedZoom ? parseFloat(savedZoom) : 1;
+  });
   
   // PropsMenu height state
   const [propsMenuHeight, setPropsMenuHeight] = useState(0);
@@ -83,18 +87,27 @@ const CanvasContent: React.FC<{
       icon: undefined // Icon'u JSON'da saklama
     }));
   };
-  
-  // Zoom functions
+
+  // Zoom handlers
   const handleZoomIn = () => {
-    setZoom(prev => Math.min(prev + ZOOM_CONSTANTS.ZOOM_STEP, ZOOM_CONSTANTS.MAX_ZOOM));
+    setZoom(prev => {
+      const newZoom = Math.min(prev + ZOOM_CONSTANTS.ZOOM_STEP, ZOOM_CONSTANTS.MAX_ZOOM);
+      localStorage.setItem(ZOOM_CONSTANTS.ZOOM_STORAGE_KEY, newZoom.toString());
+      return newZoom;
+    });
   };
-  
+
   const handleZoomOut = () => {
-    setZoom(prev => Math.max(prev - ZOOM_CONSTANTS.ZOOM_STEP, ZOOM_CONSTANTS.MIN_ZOOM));
+    setZoom(prev => {
+      const newZoom = Math.max(prev - ZOOM_CONSTANTS.ZOOM_STEP, ZOOM_CONSTANTS.MIN_ZOOM);
+      localStorage.setItem(ZOOM_CONSTANTS.ZOOM_STORAGE_KEY, newZoom.toString());
+      return newZoom;
+    });
   };
-  
+
   const handleZoomReset = () => {
     setZoom(1);
+    localStorage.setItem(ZOOM_CONSTANTS.ZOOM_STORAGE_KEY, '1');
   };
   
   // Keyboard shortcuts
@@ -391,8 +404,9 @@ export const Canvas = forwardRef<HTMLDivElement, CanvasProps>(
     },
     ref
   ) => {
-    return (
-      <ApiProvider>
+      return (
+    <ApiProvider>
+      <BreakpointProvider>
         <DndProvider backend={HTML5Backend}>
           <CanvasContent
             backgroundColor={backgroundColor}
@@ -407,8 +421,9 @@ export const Canvas = forwardRef<HTMLDivElement, CanvasProps>(
             props={props}
           />
         </DndProvider>
-      </ApiProvider>
-    );
+      </BreakpointProvider>
+    </ApiProvider>
+  );
   }
 );
 

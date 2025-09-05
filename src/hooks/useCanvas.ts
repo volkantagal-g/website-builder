@@ -210,11 +210,11 @@ export const useCanvas = (components: ComponentMetadata[]) => {
     }
   };
 
-  const handlePropsChange = (componentId: string, newProps: Record<string, any>) => {
-    console.log('🔄 Props change requested:', { componentId, newProps });
+  const handlePropsChange = (componentId: string, newProps: Record<string, any>, breakpointProps?: Record<string, Record<string, any>>) => {
+    console.log('🔄 Props change requested:', { componentId, newProps, breakpointProps });
     
     setCanvasComponents(prev => {
-      const updated = updatePropsRecursive(prev, componentId, newProps);
+      const updated = updatePropsRecursive(prev, componentId, newProps, breakpointProps);
       console.log('✅ Canvas components updated:', updated);
       return updated;
     });

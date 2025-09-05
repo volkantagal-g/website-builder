@@ -12,7 +12,7 @@ interface StylePanelProps {
   selectedComponent: ComponentMetadata | null;
   componentId?: string;
   canvasData?: Record<string, unknown>;
-  onPropsChange: (componentId: string, newProps: Record<string, unknown>) => void;
+  onPropsChange: (componentId: string, newProps: Record<string, unknown>, breakpointProps?: Record<string, Record<string, any>>) => void;
 }
 
 export const StylePanel: React.FC<StylePanelProps> = ({

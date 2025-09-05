@@ -61,13 +61,23 @@ export const addToContainerRecursive = (
 export const updatePropsRecursive = (
   components: CanvasComponent[], 
   componentId: string, 
-  newProps: Record<string, any>
+  newProps: Record<string, any>,
+  breakpointProps?: Record<string, Record<string, any>>
 ): CanvasComponent[] => {
   return components.map(comp => {
     if (comp.id === componentId) {
-      return { ...comp, props: newProps };
+      return { 
+        ...comp, 
+        // Base props'ları sadece newProps boş değilse güncelle
+        props: Object.keys(newProps).length > 0 ? newProps : comp.props,
+        // Breakpoint props'larını güncelle - mevcut breakpoint props'ları ile birleştir
+        breakpointProps: breakpointProps ? { ...comp.breakpointProps, ...breakpointProps } : comp.breakpointProps
+      };
     } else if (comp.children && comp.children.length > 0) {
-      return { ...comp, children: updatePropsRecursive(comp.children, componentId, newProps) };
+      return { 
+        ...comp, 
+        children: updatePropsRecursive(comp.children, componentId, newProps, breakpointProps) 
+      };
     }
     return comp;
   });

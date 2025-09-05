@@ -5,6 +5,8 @@ import { useApi } from '../../context/ApiContext';
 import { processComponentProps } from '../../utils/templateBinding';
 import { DraggableComponentProps } from '../../types/canvas';
 import { getStyleValue, combineStyleProperties, getComponentLibrary, addToContainerRecursive, findAndRemoveComponent, removeComponentRecursive, isContainerComponent } from '../../utils/canvasHelpers';
+import { useBreakpointProps } from '../../hooks/useBreakpointProps';
+import { useBreakpointContext } from '../../context/BreakpointContext';
 
 export const DraggableComponent: React.FC<DraggableComponentProps & { isPreview?: boolean }> = ({ 
   component, 
@@ -26,6 +28,8 @@ export const DraggableComponent: React.FC<DraggableComponentProps & { isPreview?
   isPreview = false
 }) => {
   const { getResponseData } = useApi();
+  const { selectedBreakpoint } = useBreakpointContext();
+  const { getFinalProps } = useBreakpointProps(component, selectedBreakpoint);
   
   const [{ isDragging }, drag] = useDrag({
     type: 'COMPONENT',
@@ -116,8 +120,9 @@ export const DraggableComponent: React.FC<DraggableComponentProps & { isPreview?
     if (component.metadata.p && component.library !== 'general') {
       const ComponentToRender = component.metadata.p;
       
-      // Pinnate component'ler için güvenli style handling
-      const processedProps = processComponentProps(component.props, { getResponseData });
+      // Pinnate component'ler için güvenli style handling - breakpoint props'ları ile birleştir
+      const finalProps = getFinalProps();
+      const processedProps = processComponentProps(finalProps, { getResponseData });
       
       // CSS property'leri filtrele, sadece gerçek CSS property'leri çıkar
       // Component'in kendi prop'larını (children, size, variant, color, etc.) koru
@@ -244,8 +249,9 @@ export const DraggableComponent: React.FC<DraggableComponentProps & { isPreview?
     
     // Container component'ler için özel render (sadece general container'lar)
     if (component.metadata.type === 'container' || isContainerComponent(component.metadata.name)) {
-      // Process container props with template binding
-      const processedProps = processComponentProps(component.props, { getResponseData });
+      // Process container props with template binding - breakpoint props'ları ile birleştir
+      const finalProps = getFinalProps();
+      const processedProps = processComponentProps(finalProps, { getResponseData });
       
       // CSS property'leri style objesinden çıkar, sadece style ve diğer valid prop'ları kullan
       const { 

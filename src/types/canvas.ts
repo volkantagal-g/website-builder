@@ -31,6 +31,7 @@ export interface CanvasComponent {
   children?: CanvasComponent[]; // Container component'ler için nested component'ler
   parentId?: string; // Parent container'ın ID'si
   endpoints?: Endpoint[]; // Canvas'a ait endpoint'ler
+  breakpointProps?: Record<string, Record<string, any>>; // Breakpoint'e göre props'lar
 }
 
 export interface CanvasProps extends React.HTMLAttributes<HTMLDivElement> {

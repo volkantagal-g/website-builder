@@ -3,15 +3,15 @@ import { FiChevronUp, FiChevronDown, FiGrid, FiList, FiMove, FiGlobe, FiEdit, Fi
 import { ComponentMetadata } from '../../types/canvas';
 import { PropInputFactory } from './PropInputFactory';
 import { INITIAL_PROPS_MENU_HEIGHT, MAX_PROPS_MENU_HEIGHT } from './constants';
-import { BREAKPOINTS, Breakpoint, BreakpointProps } from '../../types/breakpoints';
-import { useBreakpoint } from '../../hooks/useBreakpoint';
+import { BREAKPOINTS, BreakpointProps } from '../../types/breakpoints';
+import { useBreakpointContext } from '../../context/BreakpointContext';
 
 import { ApiEndpointsPanel } from './ApiEndpointsPanel';
 import { StylePanel } from './StylePanel';
 
 export interface PropsMenuProps {
   selectedComponent: ComponentMetadata | null;
-  onPropsChange: (componentId: string, newProps: Record<string, any>) => void;
+  onPropsChange: (componentId: string, newProps: Record<string, any>, breakpointProps?: Record<string, Record<string, any>>) => void;
   componentId?: string;
   canvasData?: any; // Component ağacı için
   palette?: Record<string, string>; // Pinnate palette CSS variables
@@ -52,18 +52,40 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
   const treeViewRef = useRef<HTMLDivElement>(null);
   const dragOverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
-  // Breakpoint state - otomatik algılama
-  const detectedBreakpoint = useBreakpoint();
-  const [selectedBreakpoint, setSelectedBreakpoint] = useState<Breakpoint>(detectedBreakpoint);
+  // Breakpoint state - context'ten al
+  const { selectedBreakpoint, setSelectedBreakpoint, isAutoMode, setIsAutoMode } = useBreakpointContext();
   const [breakpointProps, setBreakpointProps] = useState<BreakpointProps>({});
-  const [isAutoMode, setIsAutoMode] = useState(true); // Otomatik mod aktif mi?
 
-  // Otomatik mod aktifken algılanan breakpoint'i kullan
-  useEffect(() => {
-    if (isAutoMode) {
-      setSelectedBreakpoint(detectedBreakpoint);
+  // Breakpoint değiştiğinde props'ları güncelle
+  React.useEffect(() => {
+    if (selectedComponent && canvasData && componentId) {
+      const findComponentProps = (components: any[]): { props: Record<string, any>; breakpointProps?: Record<string, Record<string, any>> } | null => {
+        for (const comp of components) {
+          if (comp.id === componentId) {
+            return { props: comp.props, breakpointProps: comp.breakpointProps };
+          }
+          if (comp.children && comp.children.length > 0) {
+            const found = findComponentProps(comp.children);
+            if (found) return found;
+          }
+        }
+        return null;
+      };
+      
+      const componentData = findComponentProps(canvasData);
+      if (componentData) {
+        // Canvas'tan gelen breakpoint props'larını yükle
+        if (componentData.breakpointProps) {
+          setBreakpointProps(componentData.breakpointProps);
+        }
+        
+        // Breakpoint'e göre props'ları birleştir - sadece canvas'tan gelen breakpoint props'larını kullan
+        const currentBreakpointProps = componentData.breakpointProps?.[selectedBreakpoint.id] || {};
+        const mergedProps = { ...componentData.props, ...currentBreakpointProps };
+        setLocalProps(mergedProps);
+      }
     }
-  }, [detectedBreakpoint, isAutoMode]);
+  }, [selectedBreakpoint.id, selectedComponent, canvasData, componentId]);
 
   // Tree View'da seçili component'e scroll yap ve tüm tree'sini aç
   useEffect(() => {
@@ -123,10 +145,10 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
       // Canvas'tan gelen gerçek component props'larını kullan
       // Eğer canvasData varsa, seçili component'i bul ve props'larını al
       if (canvasData && componentId) {
-        const findComponentProps = (components: any[]): Record<string, any> | null => {
+        const findComponentProps = (components: any[]): { props: Record<string, any>; breakpointProps?: Record<string, Record<string, any>> } | null => {
           for (const comp of components) {
             if (comp.id === componentId) {
-              return comp.props;
+              return { props: comp.props, breakpointProps: comp.breakpointProps };
             }
             if (comp.children && comp.children.length > 0) {
               const found = findComponentProps(comp.children);
@@ -136,11 +158,16 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
           return null;
         };
         
-        const canvasProps = findComponentProps(canvasData);
-        if (canvasProps) {
+        const componentData = findComponentProps(canvasData);
+        if (componentData) {
+          // Canvas'tan gelen breakpoint props'larını yükle
+          if (componentData.breakpointProps) {
+            setBreakpointProps(componentData.breakpointProps);
+          }
+          
           // Breakpoint'e göre props'ları birleştir
-          const currentBreakpointProps = breakpointProps[selectedBreakpoint.id] || {};
-          const mergedProps = { ...canvasProps, ...currentBreakpointProps };
+          const currentBreakpointProps = componentData.breakpointProps?.[selectedBreakpoint.id] || breakpointProps[selectedBreakpoint.id] || {};
+          const mergedProps = { ...componentData.props, ...currentBreakpointProps };
           setLocalProps(mergedProps);
         } else {
           const currentBreakpointProps = breakpointProps[selectedBreakpoint.id] || {};
@@ -208,20 +235,24 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
   }, [isResizing]);
 
   const handlePropChange = (propName: string, value: any) => {
+    // Local props'u güncelle (sadece görüntü için)
     const newProps = { ...localProps, [propName]: value };
     setLocalProps(newProps);
     
     // Breakpoint'e özel props'ları güncelle
-    setBreakpointProps(prev => ({
-      ...prev,
+    const updatedBreakpointProps = {
+      ...breakpointProps,
       [selectedBreakpoint.id]: {
-        ...prev[selectedBreakpoint.id],
+        ...breakpointProps[selectedBreakpoint.id],
         [propName]: value
       }
-    }));
+    };
+    setBreakpointProps(updatedBreakpointProps);
     
     if (componentId) {
-      onPropsChange(componentId, newProps);
+      // Sadece breakpoint props'larını gönder, base props'ları değiştirme
+      console.log('🔧 Sending breakpoint props:', { componentId, updatedBreakpointProps });
+      onPropsChange(componentId, {}, updatedBreakpointProps);
     }
   };
 
@@ -639,6 +670,134 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
         </div>
       </div>
 
+      {/* Breakpoint Selector */}
+      <div style={{
+        height: '50px',
+        backgroundColor: '#f8f9fa',
+        borderBottom: '1px solid #e9ecef',
+        display: 'flex',
+        alignItems: 'center',
+        padding: '0 20px',
+        flexShrink: 0,
+      }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+        }}>
+          <FiMonitor size={16} color="#666" />
+          <span style={{
+            fontSize: '12px',
+            fontWeight: '600',
+            color: '#666',
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px',
+          }}>
+            Breakpoint:
+          </span>
+          <button
+            onClick={() => setIsAutoMode(!isAutoMode)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              padding: '4px 8px',
+              backgroundColor: isAutoMode ? '#28a745' : '#6c757d',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              fontSize: '10px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = isAutoMode ? '#218838' : '#545b62';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = isAutoMode ? '#28a745' : '#6c757d';
+            }}
+          >
+            {isAutoMode ? 'AUTO' : 'MANUAL'}
+          </button>
+          {!isAutoMode && (
+            <button
+              onClick={() => setIsAutoMode(true)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '4px 8px',
+                backgroundColor: '#17a2b8',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                fontSize: '10px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#138496';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#17a2b8';
+              }}
+            >
+              RESET TO AUTO
+            </button>
+          )}
+          <div style={{
+            display: 'flex',
+            gap: '4px',
+          }}>
+            {BREAKPOINTS.map((breakpoint) => (
+              <button
+                key={breakpoint.id}
+                onClick={() => {
+                  if (!isAutoMode) {
+                    setSelectedBreakpoint(breakpoint);
+                  }
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  padding: '6px 12px',
+                  backgroundColor: selectedBreakpoint.id === breakpoint.id ? '#6b3ff7' : '#ffffff',
+                  color: selectedBreakpoint.id === breakpoint.id ? '#ffffff' : '#666',
+                  border: `1px solid ${selectedBreakpoint.id === breakpoint.id ? '#6b3ff7' : '#e9ecef'}`,
+                  borderRadius: '4px',
+                  fontSize: '12px',
+                  fontWeight: '500',
+                  cursor: isAutoMode ? 'not-allowed' : 'pointer',
+                  opacity: isAutoMode ? 0.6 : 1,
+                  transition: 'all 0.2s ease',
+                }}
+                onMouseEnter={(e) => {
+                  if (!isAutoMode && selectedBreakpoint.id !== breakpoint.id) {
+                    e.currentTarget.style.backgroundColor = '#f8f9fa';
+                    e.currentTarget.style.borderColor = '#6b3ff7';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isAutoMode && selectedBreakpoint.id !== breakpoint.id) {
+                    e.currentTarget.style.backgroundColor = '#ffffff';
+                    e.currentTarget.style.borderColor = '#e9ecef';
+                  }
+                }}
+              >
+                <span>{breakpoint.icon}</span>
+                <span>{breakpoint.name}</span>
+                <span style={{ fontSize: '10px', opacity: 0.7 }}>
+                  {breakpoint.width}×{breakpoint.height}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {/* Tab Menu - Chrome DevTools Style */}
       <div style={{
         height: '40px',
@@ -753,106 +912,6 @@ export const PropsMenu: React.FC<PropsMenuProps> = ({
         </div>
       </div>
 
-      {/* Breakpoint Selector */}
-      <div style={{
-        height: '50px',
-        backgroundColor: '#f8f9fa',
-        borderBottom: '1px solid #e9ecef',
-        display: 'flex',
-        alignItems: 'center',
-        padding: '0 20px',
-        flexShrink: 0,
-      }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-        }}>
-          <FiMonitor size={16} color="#666" />
-          <span style={{
-            fontSize: '12px',
-            fontWeight: '600',
-            color: '#666',
-            textTransform: 'uppercase',
-            letterSpacing: '0.5px',
-          }}>
-            Breakpoint:
-          </span>
-          <button
-            onClick={() => setIsAutoMode(!isAutoMode)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              padding: '4px 8px',
-              backgroundColor: isAutoMode ? '#28a745' : '#6c757d',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              fontSize: '10px',
-              fontWeight: '600',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = isAutoMode ? '#218838' : '#545b62';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = isAutoMode ? '#28a745' : '#6c757d';
-            }}
-          >
-            {isAutoMode ? 'AUTO' : 'MANUAL'}
-          </button>
-          <div style={{
-            display: 'flex',
-            gap: '4px',
-          }}>
-            {BREAKPOINTS.map((breakpoint) => (
-              <button
-                key={breakpoint.id}
-                onClick={() => {
-                  if (!isAutoMode) {
-                    setSelectedBreakpoint(breakpoint);
-                  }
-                }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  padding: '6px 12px',
-                  backgroundColor: selectedBreakpoint.id === breakpoint.id ? '#6b3ff7' : '#ffffff',
-                  color: selectedBreakpoint.id === breakpoint.id ? '#ffffff' : '#666',
-                  border: `1px solid ${selectedBreakpoint.id === breakpoint.id ? '#6b3ff7' : '#e9ecef'}`,
-                  borderRadius: '4px',
-                  fontSize: '12px',
-                  fontWeight: '500',
-                  cursor: isAutoMode ? 'not-allowed' : 'pointer',
-                  opacity: isAutoMode ? 0.6 : 1,
-                  transition: 'all 0.2s ease',
-                }}
-                onMouseEnter={(e) => {
-                  if (!isAutoMode && selectedBreakpoint.id !== breakpoint.id) {
-                    e.currentTarget.style.backgroundColor = '#f8f9fa';
-                    e.currentTarget.style.borderColor = '#6b3ff7';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isAutoMode && selectedBreakpoint.id !== breakpoint.id) {
-                    e.currentTarget.style.backgroundColor = '#ffffff';
-                    e.currentTarget.style.borderColor = '#e9ecef';
-                  }
-                }}
-              >
-                <span>{breakpoint.icon}</span>
-                <span>{breakpoint.name}</span>
-                <span style={{ fontSize: '10px', opacity: 0.7 }}>
-                  {breakpoint.width}×{breakpoint.height}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
 
       {/* Tab Content */}
       <div style={{
